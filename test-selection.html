@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Selection - ExamAce</title>
+    <style>
+        /* Reset and base styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #374151; background-color: #f9fafb; }
+        :root {
+            --primary: #15803d; --primary-foreground: #ffffff; --card: #ffffff;
+            --border: #e5e7eb; --muted-foreground: #6b7280; --ring: #84cc16; --foreground: #374151;
+            --warning: #f59e0b;
+        }
+
+        /* Navbar Styles */
+        .navbar { background-color: var(--card); border-bottom: 1px solid var(--border); padding: 0 1rem; position: sticky; top: 0; z-index: 100;}
+        .nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 4rem; }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-link { color: var(--foreground); text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover, .nav-link.active { color: var(--primary); }
+        .nav-user { display: flex; align-items: center; gap: 1rem; }
+        .user-avatar { width: 2rem; height: 2rem; background-color: var(--primary); color: var(--primary-foreground); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem; }
+        .logout-btn { background: none; border: 1px solid var(--border); color: var(--foreground); padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; transition: all 0.2s; }
+        .logout-btn:hover { background-color: #f3f4f6; }
+
+        /* Mobile menu */
+        .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.75rem; cursor: pointer; color: var(--foreground); }
+        .mobile-menu { display: none; background-color: var(--card); border-top: 1px solid var(--border); padding: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .mobile-menu.active { display: block; }
+        .mobile-nav-links { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+        .mobile-nav-links .nav-link { display: block; padding: 0.5rem 0; }
+
+        .main-container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+        .page-header { text-align: center; margin-bottom: 2rem; }
+        .page-title { font-size: 2.25rem; font-weight: 700; color: var(--primary); }
+        .page-subtitle { font-size: 1.1rem; color: var(--muted-foreground); margin-top: 0.5rem; }
+
+        /* Filter Section */
+        .filter-section { background-color: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem; }
+        /* Adjusted grid to accommodate the new filter */
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .filter-group label { font-weight: 500; font-size: 0.875rem; display: block; margin-bottom: 0.5rem; }
+        .filter-select { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 0.375rem; background-color: #f9fafb; transition: all 0.2s; }
+        .filter-select:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px rgba(132, 204, 22, 0.2); }
+
+        /* Test Grid */
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
+        .test-card { background-color: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.2s; position: relative; }
+        .test-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08); }
+        
+        /* Style for locked tests */
+        .test-card.locked {
+            background-color: #fef2f2; /* Light red */
+            border-color: #fca5a5;
+        }
+
+        .test-card.locked::after {
+            content: "🔒 Pro";
+            position: absolute;
+            top: 0;
+            right: 0;
+            border-top-right-radius: 0.75rem;
+            border-bottom-left-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            background-color: #ef4444; /* Red */
+            color: white;
+            z-index: 10;
+        }
+
+        .test-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .test-title { font-size: 1.25rem; font-weight: 600; color: var(--primary); margin-bottom: 0.5rem; }
+        .test-type-tag { background-color: #e0f2f1; color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 500; }
+        .test-description { color: var(--muted-foreground); font-size: 0.9rem; margin: 0.5rem 0 1rem; flex-grow: 1; }
+        .test-details { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; font-size: 0.875rem; margin-bottom: 1.5rem; }
+        .btn-primary { background-color: var(--primary); color: var(--primary-foreground); width: 100%; padding: 0.75rem; border: none; border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
+        .btn-primary:hover { background-color: #166534; }
+        .btn-primary.locked-btn { 
+            background-color: #ef4444; 
+            color: var(--primary-foreground);
+        }
+        .btn-primary.locked-btn:hover {
+            background-color: #dc2626;
+        }
+        
+        /* Loading and Empty States */
+        .state-container { text-align: center; padding: 3rem; background-color: var(--card); border-radius: 0.75rem; border: 1px solid var(--border); }
+        .state-container p { font-size: 1.1rem; color: var(--muted-foreground); }
+
+        /* Modal/Message Box Styling */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.6); display: none; 
+            align-items: center; justify-content: center; z-index: 200;
+        }
+        .modal-box {
+            background-color: var(--card); padding: 2rem; border-radius: 0.75rem; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); max-width: 400px; width: 90%; 
+            text-align: center;
+        }
+        .modal-icon { color: var(--warning); font-size: 2rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--foreground); margin-bottom: 0.5rem; }
+        .modal-message { color: var(--muted-foreground); margin-bottom: 1.5rem; }
+        .modal-close-btn { 
+            background-color: var(--primary); color: var(--primary-foreground); 
+            padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; 
+            font-weight: 600; cursor: pointer; transition: background-color 0.2s; 
+        }
+        .modal-close-btn:hover { background-color: #166534; }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-user { display: none; }
+            .mobile-menu-btn { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Message Box Modal -->
+    <div id="subscription-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-icon">⚠️</div>
+            <h3 class="modal-title">Subscription Required</h3>
+            <p class="modal-message">This mock test is available exclusively to our **Subscribed Members**. You currently have access to our 5 featured free tests.</p>
+            <button id="modal-close-btn" class="modal-close-btn">Got It!</button>
+        </div>
+    </div>
+    
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="nav-brand">ExamAce</a>
+            <ul class="nav-links">
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="test-selection.html" class="nav-link active">Mock Tests</a></li>
+           
+                <li><a href="resources.html" class="nav-link">Resources</a></li>
+                <li><a href="tips.html" class="nav-link">Tips & Revision</a></li>
+                          <li><a href="info.html" class="nav-link">Exam Info</a></li>
+            </ul>
+            <div class="nav-user">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <button class="logout-btn" id="logout-btn">Logout</button>
+            </div>
+             <button class="mobile-menu-btn" id="mobile-menu-btn">&#9776;</button>
+        </div>
+        <div class="mobile-menu" id="mobile-menu">
+            <ul class="mobile-nav-links">
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="test-selection.html" class="nav-link active">Mock Tests</a></li>
+         
+                <li><a href="resources.html" class="nav-link">Resources</a></li>
+                <li><a href="tips.html" class="nav-link">Tips & Revision</a></li>
+                          <li><a href="info.html" class="nav-link">Exam Info</a></li>
+                <li><a href="#" id="mobile-logout-btn" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-container">
+        <header class="page-header">
+            <h1 class="page-title">Available Mock Tests</h1>
+            <p class="page-subtitle">Find the perfect test to advance your preparation. **5 specific tests are available for free!**</p>
+        </header>
+
+        <section class="filter-section">
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label for="exam-filter">Exam Type</label>
+                    <select id="exam-filter" class="filter-select">
+                        <option value="all">All Exams</option>
+                        <option value="JEE">JEE</option>
+                        <option value="NEET">NEET</option>
+                        <option value="KCET">KCET</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="subject-filter">Subject</label>
+                    <select id="subject-filter" class="filter-select">
+                        <option value="all">All Subjects</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Chemistry">Chemistry</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Biology">Biology</option>
+                    </select>
+                </div>
+                <!-- Updated: Type filter logic based on the C flag -->
+                <div class="filter-group">
+                    <label for="type-filter">Type</label>
+                    <select id="type-filter" class="filter-select">
+                        <option value="all">All</option>
+                        <option value="chapterwise">Chapterwise</option>
+                        <option value="full-syllabus">Full Syllabus</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="duration-filter">Duration</label>
+                    <select id="duration-filter" class="filter-select">
+                        <option value="all">Any Duration</option>
+                        <option value="short">Under 1 hour</option>
+                        <option value="medium">1-2 hours</option>
+                        <option value="long">Over 2 hours</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <section id="state-container" class="state-container" style="display: none;"></section>
+        <section class="test-grid" id="test-grid"></section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // IMPORTANT: The following is mock data for Firebase configuration.
+        // In a real Canvas environment, these would be loaded from global variables.
+        const firebaseConfig = {
+          apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
+          authDomain: "testseries-38752.firebaseapp.com",
+          projectId: "testseries-38752",
+          storageBucket: "testseries-38752.firebasestorage.app",
+          messagingSenderId: "519384534407",
+          appId: "1:519384534407:web:201265a9d703708334d722"
+        };
+      
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Constants for free tier logic - Using user-defined indices: 4, 10, 35, 11, 2
+        const FREE_INDICES = [4, 10, 35, 11, 2];
+        // Map to store the desired display order for free tests: {4: 0, 10: 1, 35: 2, 11: 3, 2: 4}
+        const FREE_ORDER_MAP = new Map();
+        FREE_INDICES.forEach((index, pos) => {
+            FREE_ORDER_MAP.set(index, pos);
+        });
+
+        class TestSelectionPage {
+            constructor() {
+                this.allTests = [];
+                this.filteredTests = [];
+                this.stateContainer = document.getElementById('state-container');
+                this.testGrid = document.getElementById('test-grid');
+                this.modal = document.getElementById('subscription-modal');
+
+                document.getElementById('modal-close-btn').addEventListener('click', () => {
+                    this.modal.style.display = 'none';
+                });
+
+                onAuthStateChanged(auth, user => {
+                    if (user) {
+                        this.fetchTests();
+                        this.initializeEventListeners();
+                        this.loadUser(user);
+                    } else {
+                        this.fetchTests(); 
+                        this.initializeEventListeners();
+                        console.log("User not logged in. Showing tests with specific free tier limitations.");
+                    }
+                });
+            }
+            
+            async loadUser(user) {
+                const userName = user.displayName || user.email || 'User';
+                document.getElementById('user-avatar').textContent = userName.charAt(0).toUpperCase();
+            }
+
+            async fetchTests() {
+                this.showState('Loading tests...');
+                try {
+                    const allTestsDocRef = doc(db, "test_aggregates", "all_tests");
+                    const docSnap = await getDoc(allTestsDocRef);
+
+                    if (docSnap.exists()) {
+                        this.allTests = docSnap.data().tests || [];
+                        
+                        // Tag each test with its original index and free/premium status
+                        this.allTests = this.allTests.map((test, index) => ({
+                            ...test,
+                            originalIndex: index, // Store original index for filtering reference
+                            isFree: FREE_INDICES.includes(index) // Check if index is in the approved list
+                        }));
+
+                        // FIX: Call applyFilters instead of renderTests directly on initial load
+                        // This ensures the sorting logic runs before the first render.
+                        this.applyFilters();
+                    } else {
+                        console.error("The 'all_tests' document does not exist!");
+                        this.showState('Test data is not available. Please contact support.');
+                    }
+                } catch (error) {
+                    console.error("Error fetching aggregated tests: ", error);
+                    this.showState('Failed to load tests.');
+                }
+            }
+
+            initializeEventListeners() {
+                // Event listeners to trigger filtering
+                document.getElementById('exam-filter').addEventListener('change', () => this.applyFilters());
+                document.getElementById('subject-filter').addEventListener('change', () => this.applyFilters());
+                document.getElementById('type-filter').addEventListener('change', () => this.applyFilters()); 
+                document.getElementById('duration-filter').addEventListener('change', () => this.applyFilters());
+                
+                // Logout handlers
+                const handleLogout = () => signOut(auth).catch(e => console.error(e));
+                document.getElementById('logout-btn').addEventListener('click', handleLogout);
+                document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
+
+                // Mobile menu
+                document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                     document.getElementById('mobile-menu').classList.toggle('active');
+                });
+            }
+
+            applyFilters() {
+                const examType = document.getElementById('exam-filter').value;
+                const subject = document.getElementById('subject-filter').value;
+                const typeFilter = document.getElementById('type-filter').value;
+                const duration = document.getElementById('duration-filter').value;
+                
+                // 1. Filter based on criteria.
+                let filtered = this.allTests.filter(test => {
+                    const examMatch = examType === 'all' || test.type === examType;
+                    const subjectMatch = subject === 'all' || (test.subjects && test.subjects.includes(subject));
+                    
+                    let typeMatch = true;
+                    if (typeFilter !== 'all') {
+                        if (typeFilter === 'chapterwise') {
+                            typeMatch = test.C === true;
+                        } else if (typeFilter === 'full-syllabus') {
+                            typeMatch = test.C !== true;
+                        }
+                    }
+
+                    let durationMatch = true;
+                    if (duration !== 'all') {
+                        if (duration === 'short') durationMatch = test.duration < 60;
+                        else if (duration === 'medium') durationMatch = test.duration >= 60 && test.duration <= 120;
+                        else if (duration === 'long') durationMatch = test.duration > 120;
+                    }
+
+                    return examMatch && subjectMatch && typeMatch && durationMatch;
+                });
+                
+                // 2. Apply custom sorting to put free tests first in the specified order
+                filtered.sort((a, b) => {
+                    // Primary Sort: Free tests first (descending sort on isFree)
+                    if (a.isFree !== b.isFree) {
+                        // true (1) - false (0) = 1 (positive) -> b comes first (free first)
+                        // false (0) - true (1) = -1 (negative) -> a comes first (free first)
+                        return b.isFree - a.isFree;
+                    }
+
+                    // Secondary Sort: If both have the same free/locked status
+                    if (a.isFree && b.isFree) {
+                        // Sort free tests based on the explicit order: 4, 10, 35, 11, 2
+                        const orderA = FREE_ORDER_MAP.get(a.originalIndex);
+                        const orderB = FREE_ORDER_MAP.get(b.originalIndex);
+                        return orderA - orderB;
+                    } else if (!a.isFree && !b.isFree) {
+                        // Sort locked tests based on their original index (0, 1, 3, 5, 6...)
+                        return a.originalIndex - b.originalIndex;
+                    }
+                    
+                    return 0;
+                });
+
+                this.filteredTests = filtered;
+                this.renderTests();
+            }
+
+            renderTests() {
+                if (this.filteredTests.length === 0) {
+                    this.showState('No tests found matching your criteria.');
+                    this.testGrid.innerHTML = '';
+                    return;
+                }
+                
+                this.stateContainer.style.display = 'none';
+                this.testGrid.innerHTML = this.filteredTests.map((test) => {
+                    // Use the stored isFree status based on original index
+                    const isFree = test.isFree;
+                    
+                    // Determine visual indicators
+                    const lockClass = isFree ? '' : 'locked';
+                    const buttonText = isFree ? 'Start Test' : 'Subscribed Material';
+                    const buttonClass = isFree ? 'btn-primary' : 'btn-primary locked-btn';
+                    
+                    let typeIndicator = '';
+                    if (test.C === true) {
+                         typeIndicator = '<span style="color: #16a34a; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">[Chapterwise]</span>'; 
+                    } else {
+                        typeIndicator = '<span style="color: #ef4444; font-size: 0.75rem; font-weight: 600; margin-left: 0.5rem;">[Full Syllabus]</span>'; 
+                    }
+
+                    return `
+                        <div class="test-card ${lockClass}" data-testid="${test.id}" data-isfree="${isFree}">
+                            <div>
+                                <div class="test-header">
+                                    <h3 class="test-title">${test.title} ${typeIndicator}</h3>
+                                    <!-- REMOVED: Index display from the description -->
+                                    <span class="test-type-tag">${test.type}</span>
+                                </div>
+                                <p class="test-description">${test.description}</p>
+                            </div>
+                            <div>
+                                <div class="test-details">
+                                    <span>⏱️ ${test.duration} mins</span>
+                                    <span>📝 ${test.questions} Questions</span>
+                                    <span>🎯 ${test.marks} Marks</span>
+                                    <span>⚠️ -${test.negativeMarks} Negative</span>
+                                </div>
+                                <button class="${buttonClass}" data-testid="${test.id}" data-isfree="${isFree ? 'true' : 'false'}">${buttonText}</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Add event listener delegation only once
+                // Remove previous listeners before adding a new one (important for filter changes)
+                const newTestGrid = this.testGrid.cloneNode(true);
+                this.testGrid.parentNode.replaceChild(newTestGrid, this.testGrid);
+                this.testGrid = newTestGrid;
+                
+                this.testGrid.addEventListener('click', e => {
+                    if (e.target.tagName === 'BUTTON' && e.target.dataset.testid) {
+                        const isFree = e.target.dataset.isfree === 'true';
+                        if (isFree) {
+                            this.startTest(e.target.dataset.testid, e.target);
+                        } else {
+                            // Locked test: Show the subscription modal
+                            this.modal.style.display = 'flex';
+                        }
+                    }
+                });
+            }
+
+            // This function is only called if the test is free (isFree === true)
+            async startTest(testId, buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.textContent = 'Loading...';
+
+                try {
+                    // Fetch the specific test document from the original 'tests' collection
+                    const testDocRef = doc(db, "tests", testId);
+                    const docSnap = await getDoc(testDocRef);
+
+                    if (docSnap.exists()) {
+                        const testData = docSnap.data();
+                        sessionStorage.setItem('current_test', JSON.stringify(testData));
+                        window.location.href = 'test-instruction.html';
+                    } else {
+                        console.error(`Test with ID ${testId} not found in 'tests' collection.`);
+                        buttonElement.disabled = false;
+                        buttonElement.textContent = 'Start Test';
+                        console.log('Error: Could not find the selected test data.');
+                    }
+                } catch (error) {
+                    console.error("Error fetching full test data:", error);
+                    buttonElement.disabled = false;
+                    buttonElement.textContent = 'Start Test';
+                    console.log('Error: An error occurred while loading the test. Please try again.');
+                }
+            }
+
+            showState(message) {
+                this.stateContainer.innerHTML = `<p>${message}</p>`;
+                this.stateContainer.style.display = 'block';
+            }
+        }
+        new TestSelectionPage();
+    </script>
+</body>
+</html>

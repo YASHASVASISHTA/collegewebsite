@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources - ExamAce</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #374151; background-color: #f9fafb; min-height: 100vh; }
+        :root {
+            --primary: #15803d; --primary-foreground: #ffffff; --secondary: #84cc16;
+            --card: #ffffff; --muted: #f3f4f6; --muted-foreground: #6b7280;
+            --border: #e5e7eb; --foreground: #374151;
+            --warning: #f59e0b;
+        }
+
+        /* --- Unified Navigation styles --- */
+        .navbar { background-color: var(--card); border-bottom: 1px solid var(--border); padding: 0 1rem; position: sticky; top: 0; z-index: 100; }
+        .nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 4rem; }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+        
+        /* Desktop Links */
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-link { 
+            color: var(--foreground); 
+            text-decoration: none; 
+            font-weight: 500; 
+            transition: all 0.2s; 
+            padding: 0 0.2rem;
+            line-height: 2;
+        }
+        .nav-link:hover, .nav-link.active { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary); 
+        }
+        
+        /* User/Logout */
+        .nav-user { display: flex; align-items: center; gap: 1rem; }
+        .user-avatar { width: 2rem; height: 2rem; background-color: var(--primary); color: var(--primary-foreground); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+        .logout-btn { background: none; border: 1px solid var(--border); color: var(--foreground); padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; transition: all 0.2s; }
+        .logout-btn:hover { background-color: var(--muted); }
+
+        /* Mobile menu */
+        .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.75rem; cursor: pointer; color: var(--foreground); padding: 0.5rem; }
+        .mobile-menu { display: none; background-color: var(--card); border-top: 1px solid var(--border); padding: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .mobile-menu.active { display: block; }
+        .mobile-nav-links { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+        .mobile-nav-links .nav-link { display: block; padding: 0.5rem 0; border-bottom: none; }
+        .mobile-nav-links .nav-link.active { color: var(--primary); font-weight: 700; }
+        
+        @media (max-width: 992px) {
+            /* Hide desktop links and user info in tablet/mobile */
+            .nav-links, .nav-user { display: none; }
+            /* Show mobile menu button */
+            .mobile-menu-btn { display: block; }
+        }
+        @media (min-width: 993px) {
+             /* Ensure desktop elements are shown above breakpoint */
+            .nav-links, .nav-user { display: flex; }
+            .mobile-menu-btn, .mobile-menu { display: none; }
+        }
+
+        /* Main content */
+        .main-container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+        .page-header { text-align: center; margin-bottom: 2.5rem; }
+        .page-title { font-size: 2.25rem; font-weight: 700; color: var(--primary); }
+        .page-subtitle { font-size: 1.1rem; color: var(--muted-foreground); margin-top: 0.5rem; }
+        .resources-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 2rem; 
+        }
+        .card { 
+            background-color: var(--card); 
+            border: 1px solid var(--border); 
+            border-radius: 0.75rem; 
+            padding: 2rem; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+        .card-title { font-size: 1.75rem; font-weight: 600; color: var(--primary); margin-bottom: 1rem; }
+        .card-description { color: var(--muted-foreground); margin-bottom: 2rem; flex-grow: 1; }
+        
+        .btn { 
+            padding: 0.75rem 1.5rem; 
+            border: none; 
+            border-radius: 0.5rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            text-decoration: none; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 0.5rem; 
+            transition: all 0.2s; 
+            width: 100%;
+        }
+        .btn-primary { 
+            background-color: var(--primary); 
+            color: var(--primary-foreground); 
+        }
+        .btn-primary:hover { 
+            background-color: #166534; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        }
+        
+        .download-list {
+            list-style: none;
+            text-align: left;
+            margin-top: 1.5rem;
+            display: none; /* Initially hidden */
+            flex-direction: column;
+            gap: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--border);
+        }
+
+        .download-list.active {
+            display: flex;
+        }
+
+        .download-link {
+            /* Replaced <li><a> with .download-link class on the <a> element */
+            color: var(--foreground);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            background-color: var(--muted);
+        }
+
+        .download-link:hover {
+            color: var(--primary);
+            background-color: #e5e7eb;
+        }
+
+        /* Style for locked items */
+        .download-link.locked {
+            background-color: #fee2e2; /* Light red */
+            color: #b91c1c; /* Dark red text */
+            cursor: pointer; /* Still clickable to show alert */
+            font-weight: 600;
+            border: 1px solid #fca5a5;
+            position: relative;
+        }
+
+        .download-link.locked svg {
+            color: #b91c1c; /* Red icon */
+        }
+
+        .download-link.locked::after {
+            content: "🔒 Pro";
+            position: absolute;
+            right: 10px;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.75rem;
+            background-color: #b91c1c;
+            color: white;
+            border-radius: 9999px;
+        }
+        
+        .download-link.free {
+             background-color: #d1fae5; /* Light green */
+             color: #065f46; /* Dark green text */
+             font-weight: 600;
+        }
+
+        .download-link.free svg {
+            color: #065f46;
+        }
+
+        .toggle-btn.active {
+            background-color: #ef4444; /* Red color for "hide" state */
+        }
+        .toggle-btn.active:hover {
+            background-color: #dc2626;
+        }
+
+        /* Modal/Message Box Styling (instead of alert()) */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.6); display: none; 
+            align-items: center; justify-content: center; z-index: 200;
+        }
+        .modal-box {
+            background-color: var(--card); padding: 2rem; border-radius: 0.75rem; 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); max-width: 400px; width: 90%; 
+            text-align: center;
+        }
+        .modal-icon { color: var(--warning); font-size: 2rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--foreground); margin-bottom: 0.5rem; }
+        .modal-message { color: var(--muted-foreground); margin-bottom: 1.5rem; }
+        .modal-close-btn { 
+            background-color: var(--primary); color: var(--primary-foreground); 
+            padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; 
+            font-weight: 600; cursor: pointer; transition: background-color 0.2s; 
+        }
+        .modal-close-btn:hover { background-color: #166534; }
+    </style>
+</head>
+<body>
+    <!-- Message Box Modal -->
+    <div id="subscription-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-icon">⚠️</div>
+            <h3 class="modal-title">Subscription Required</h3>
+            <p class="modal-message">This feature, including past year papers from 2021-2024, is available exclusively to our **Subscribed Members**. Upgrade your plan to unlock all resources!</p>
+            <button id="modal-close-btn" class="modal-close-btn">Got It!</button>
+        </div>
+    </div>
+    
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="nav-brand">ExamAce</a>
+            <!-- Desktop Links -->
+            <ul class="nav-links">
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
+                <li><a href="resources.html" class="nav-link active">Resources</a></li>
+                <li><a href="tips.html" class="nav-link">Formulas & Revision</a></li>
+                <li><a href="info.html" class="nav-link">Exam Info</a></li>
+            </ul>
+            <!-- Desktop User/Logout -->
+            <div class="nav-user">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <a href="#" id="logout-btn" class="nav-link" style="border-bottom: none;">Logout</a>
+            </div>
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-btn" id="mobile-menu-btn">&#9776;</button>
+        </div>
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobile-menu">
+            <ul class="mobile-nav-links">
+                <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
+                <li><a href="resources.html" class="nav-link active">Resources</a></li>
+                <li><a href="tips.html" class="nav-link">Formulas & Revision</a></li>
+                <li><a href="info.html" class="nav-link">Exam Info</a></li>
+                <li><a href="#" id="mobile-logout-btn" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <header class="page-header">
+            <h1 class="page-title">Download Previous Year Question Papers (PYQs)</h1>
+            <p class="page-subtitle">Instantly download PDF files for major entrance exams. **2025 Papers are Free!**</p>
+        </header>
+        <section class="resources-grid">
+            <!-- JEE Card -->
+            <div class="card">
+                <div>
+                    <h2 class="card-title">JEE PYQs</h2>
+                    <p class="card-description">Get all available previous year question papers for JEE Mains to enhance your practice.</p>
+                </div>
+                <button class="btn btn-primary toggle-btn" data-exam="jee">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    <span>Show JEE Papers</span>
+                </button>
+                <ul class="download-list" id="jee-list"></ul>
+            </div>
+            
+            <!-- NEET Card -->
+            <div class="card">
+                <div>
+                    <h2 class="card-title">NEET PYQs</h2>
+                    <p class="card-description">Access a complete collection of NEET previous year question papers crucial for medical entrance preparation.</p>
+                </div>
+                <button class="btn btn-primary toggle-btn" data-exam="neet">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    <span>Show NEET Papers</span>
+                </button>
+                <ul class="download-list" id="neet-list"></ul>
+            </div>
+
+            <!-- KCET Card -->
+            <div class="card">
+                <div>
+                    <h2 class="card-title">KCET PYQs</h2>
+                    <p class="card-description">Download all Karnataka CET (KCET) previous year papers for state-level exam practice.</p>
+                </div>
+                <button class="btn btn-primary toggle-btn" data-exam="kcet">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    <span>Show KCET Papers</span>
+                </button>
+                <ul class="download-list" id="kcet-list"></ul>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        // Import Firebase modules for authentication handling
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        
+        // --- START OF CONFIGURATION ---
+        // Placeholder Firebase Configuration 
+        const firebaseConfig = {
+          apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
+          authDomain: "testseries-38752.firebaseapp.com",
+          projectId: "testseries-38752",
+          storageBucket: "testseries-38752.firebasestorage.app",
+          messagingSenderId: "519384534407",
+          appId: "1:519384534407:web:201265a9d703708334d722"
+        };
+      
+        // Data structure containing the actual, working Google Drive URLs and filenames
+        const files = {
+            // Note: The structure includes a 'free' flag to control access
+            jee: [
+                { name: 'JEE 2021', url: 'https://drive.google.com/uc?export=download&id=1sORTAB2GPG7Bg05jRJTFv3fpmGhyM5-a', filename: 'JEE_21.pdf', free: false },
+                { name: 'JEE 2022', url: 'https://drive.google.com/uc?export=download&id=1nghtYMVB-zpFEJR1uXz43srZMavTO0IF', filename: 'JEE_22.pdf', free: false },
+                { name: 'JEE 2023', url: 'https://drive.google.com/uc?export=download&id=1KGAbYnwERKpxTGCL2cDXpCiIbw34p22P', filename: 'JEE_23.pdf', free: false },
+                { name: 'JEE 2024', url: 'https://drive.google.com/uc?export=download&id=1AQ5VutPbebW4niu9bIF8SJ4jadxfPoZs', filename: 'JEE_24.pdf', free: false },
+                { name: 'JEE 2025', url: 'https://drive.google.com/uc?export=download&id=19dsTM1Q5oE3OnDqkdEHVcui3mBDIUp5U', filename: 'JEE_25.pdf', free: true },
+            ],
+            neet: [
+                { name: 'NEET 2021', url: 'https://drive.google.com/uc?export=download&id=1yfNoNXKkagsUfmI3K4xpsRR_EmHfpy9X', filename: 'NEET_2021.pdf', free: false },
+                { name: 'NEET 2022', url: 'https://drive.google.com/uc?export=download&id=1-fsauQHRVNAJEMmf-EDrlcsRtBD96ykV', filename: 'NEET_2022.pdf', free: false },
+                { name: 'NEET 2023', url: 'https://drive.google.com/uc?export=download&id=1Fml64e8bYQeROzG5FgXjAcXwor9XIWFd', filename: 'NEET_2023.pdf', free: false },
+                { name: 'NEET 2024', url: 'https://drive.google.com/uc?export=download&id=1MyOpRmmTaGEfg9ca_l-zrP_Z3Au6skaC', filename: 'NEET_2024.pdf', free: false },
+                { name: 'NEET 2025', url: 'https://drive.google.com/uc?export=download&id=1U0Rf7fgAu3viGhiJZydYR8muQUsLaBDJ', filename: 'NEET_2025.pdf', free: true },
+            ],
+            kcet: [
+                { name: 'KCET 2020', url: 'https://drive.google.com/uc?export=download&id=1pJDyVj_S0_wg5nt0Cb277eZcS5rQNDSg', filename: 'KCET_2020.pdf', free: false },
+                { name: 'KCET 2021', url: 'https://drive.google.com/uc?export=download&id=1SjufYpdsKBvpKJZwAZTXgRnkt4L4kY2M', filename: 'KCET_2021.pdf', free: false },
+                { name: 'KCET 2022', url: 'https://drive.google.com/uc?export=download&id=1JSKKcpoH5x9hRo6gmmragzDbSDe7mkK6', filename: 'KCET_2022.pdf', free: false },
+                { name: 'KCET 2023', url: 'https://drive.google.com/uc?export=download&id=1dCwYYzQdDVkJvnZMvQe93DwfJ7geZnkE', filename: 'KCET_2023.pdf', free: false },
+                { name: 'KCET 2024', url: 'https://drive.google.com/uc?export=download&id=19ublZdui6e3RRG70UEWyPZUApdY2RhhJ', filename: 'KCET_2024.pdf', free: false },
+                { name: 'KCET 2025', url: 'https://drive.google.com/uc?export=download&id=1XI_l-cEfUv-diDPZuVeyZKctFquaUBKH', filename: 'KCET_2025.pdf', free: true }
+            ]
+        };
+        // --- END OF CONFIGURATION ---
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // --- Authentication Logic ---
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                const userName = user.displayName || user.email || 'User';
+                document.getElementById('user-avatar').textContent = userName.charAt(0).toUpperCase();
+            } else {
+                console.log("User not authenticated. Assuming public access for resource page demo.");
+            }
+        });
+        
+        const handleLogout = (event) => {
+            event.preventDefault();
+            signOut(auth)
+                .then(() => {
+                    window.location.href = 'login.html';
+                })
+                .catch(e => console.error("Logout Error:", e));
+        };
+        document.getElementById('logout-btn').addEventListener('click', handleLogout);
+        document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('active');
+        });
+
+        document.getElementById('modal-close-btn').addEventListener('click', () => {
+            document.getElementById('subscription-modal').style.display = 'none';
+        });
+
+        // --- Resource List Logic ---
+
+        /**
+         * Populates the download list with links using the provided file objects.
+         * Adds subscription gating logic.
+         */
+        function populateList(examType, listElement) {
+            listElement.innerHTML = '';
+            
+            const fileObjects = files[examType];
+            
+            fileObjects.forEach(file => {
+                const listItem = document.createElement('li');
+                const link = document.createElement('a');
+                
+                // If free: set attributes for immediate download
+                if (file.free) {
+                    link.href = file.url;
+                    link.download = file.filename;
+                    link.target = "_blank"; 
+                    link.classList.add('download-link', 'free');
+                } else {
+                    // If locked: prevent default action and show modal
+                    link.href = "#"; // Prevent navigation
+                    link.classList.add('download-link', 'locked');
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        document.getElementById('subscription-modal').style.display = 'flex';
+                    });
+                }
+                
+                // Download icon SVG for visual clarity
+                const downloadIcon = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                `;
+                link.innerHTML = downloadIcon + `<span>${file.name} (${file.filename})</span>`;
+                
+                listItem.appendChild(link);
+                listElement.appendChild(listItem);
+            });
+        }
+
+        const toggleButtons = document.querySelectorAll('.toggle-btn');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const examType = event.currentTarget.dataset.exam;
+                const downloadList = document.getElementById(`${examType}-list`);
+                const isVisible = downloadList.classList.contains('active');
+
+                // Close all other lists and reset their buttons
+                document.querySelectorAll('.download-list').forEach(list => {
+                    if (list.id !== `${examType}-list`) {
+                        list.classList.remove('active');
+                    }
+                });
+                document.querySelectorAll('.toggle-btn').forEach(btn => {
+                    if (btn !== event.currentTarget) {
+                        const btnExam = btn.dataset.exam;
+                        btn.querySelector('span').textContent = `Show ${btnExam.toUpperCase()} Papers`;
+                        btn.classList.remove('active');
+                    }
+                });
+
+                // Toggle the clicked list
+                if (!isVisible) {
+                    downloadList.classList.add('active');
+                    event.currentTarget.classList.add('active');
+                    event.currentTarget.querySelector('span').textContent = `Hide ${examType.toUpperCase()} Papers`;
+                    populateList(examType, downloadList);
+                } else {
+                    downloadList.classList.remove('active');
+                    event.currentTarget.classList.remove('active');
+                    event.currentTarget.querySelector('span').textContent = `Show ${examType.toUpperCase()} Papers`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

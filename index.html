@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExamAce - Your Ultimate Exam Preparation Partner</title>
+    <style>
+        /* Global Styles & Variables based on your existing files */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #374151; background-color: #f9fafb; min-height: 100vh; display: flex; flex-direction: column; }
+        :root {
+            --primary: #15803d; /* Green */
+            --primary-foreground: #ffffff;
+            --secondary: #84cc16;
+            --card: #ffffff;
+            --muted: #f3f4f6;
+            --muted-foreground: #6b7280;
+            --border: #e5e7eb;
+            --foreground: #374151;
+            --accent: #dcfce7; /* Light green for sections */
+        }
+        
+        /* Navigation (Replicated from your files) */
+        .navbar { background-color: var(--card); border-bottom: 1px solid var(--border); padding: 0 1rem; position: sticky; top: 0; z-index: 100; }
+        .nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 4rem; }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+        .nav-actions { display: flex; gap: 1rem; }
+        .btn { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 0.375rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; text-align: center; }
+        .btn-primary { background-color: var(--primary); color: var(--primary-foreground); border-color: var(--primary); }
+        .btn-primary:hover { background-color: #166534; }
+        .btn-outline { background-color: transparent; color: var(--primary); border-color: var(--primary); }
+        .btn-outline:hover { background-color: var(--accent); }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--card) 100%);
+            text-align: center;
+            padding: 4rem 1rem;
+            border-bottom-left-radius: 1.5rem;
+            border-bottom-right-radius: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .hero-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            color: var(--muted-foreground);
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+        
+        /* Concept Breakdown Section */
+        .breakdown-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        .section-title {
+            font-size: clamp(1.75rem, 4vw, 2.5rem);
+            font-weight: 700;
+            color: var(--foreground);
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .module-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            transition: all 0.3s;
+        }
+        .module-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(21, 128, 61, 0.1);
+        }
+
+        .module-icon {
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 0.2rem;
+        }
+
+        .module-content h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        .module-content p {
+            color: var(--foreground);
+            margin-bottom: 0.75rem;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .nav-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .nav-actions a {
+                width: 100%;
+                font-size: 0.875rem;
+                padding: 0.5rem 0.75rem;
+            }
+            .module-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .module-icon {
+                margin-bottom: 1rem;
+            }
+            .module-content {
+                text-align: left; /* Keep text aligned left within the card */
+                width: 100%;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 2rem 1rem;
+            text-align: center;
+            margin-top: auto;
+            color: var(--muted-foreground);
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <a href="#" class="nav-brand">ExamAce</a>
+            <div class="nav-actions">
+                <a href="login.html" class="btn btn-outline">Login</a>
+                <a href="dashboard.html" class="btn btn-primary">Start Prep</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section: The Core Concept -->
+        <section class="hero">
+            <h1 class="hero-title">Master Your Exams with ExamAce</h1>
+            <p class="hero-subtitle">
+                ExamAce is designed as a focused tool to provide **practice, analysis, and resources** for major competitive exams like **JEE, NEET, and KCET**. Everything you need is structured into four simple sections.
+            </p>
+            <div class="nav-actions" style="justify-content: center;">
+                <a href="login.html" class="btn btn-primary" style="padding: 0.75rem 2rem;">Start Practice</a>
+            </div>
+        </section>
+
+        <!-- Concept Breakdown Section: Explaining Each Page -->
+        <section class="breakdown-section">
+            <h2 class="section-title">Your ExamAce Roadmap: What Each Section Does</h2>
+
+            <!-- Module 1: Mock Tests (test-selection.html, test-instruction.html, test.html) -->
+            <div class="module-card">
+                <div class="module-icon">1</div>
+                <div class="module-content">
+                    <h3>Mock Tests</h3>
+                    <p>
+                        **Concept: Simulated Practice and Performance Measurement.** This is where you find and attempt full-length, timed mock tests. The interface accurately mimics the pressure and format of the real exam, including a live timer and question palette.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Module 2: Detailed Results (results.html) -->
+            <div class="module-card">
+                <div class="module-icon">2</div>
+                <div class="module-content">
+                    <h3>Results and Analysis</h3>
+                    <p>
+                        **Concept: Identify Weaknesses and Learn from Mistakes.** Immediately after submitting a test, this section gives you a deep dive into your performance. It shows your **final score**, **subject-wise accuracy**, and provides a question-by-question review with the **correct solution** for every problem.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Module 3: Resources (resources.html) -->
+            <div class="module-card">
+                <div class="module-icon">3</div>
+                <div class="module-content">
+                    <h3>Resources (PYQs)</h3>
+                    <p>
+                        **Concept: External Study Materials and Practice Papers.** This section provides access to **Previous Year Question Papers (PYQs)** for JEE, NEET, and KCET. These files are ready to be downloaded for quick, targeted practice or reviewing past exam trends.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Module 4: Tips and Exam Info (tips.html, info.html) -->
+            <div class="module-card">
+                <div class="module-icon">4</div>
+                <div class="module-content">
+                    <h3>Revision & Exam Info</h3>
+                    <p>
+                        **Concept: Quick Revision Tools and Planning.** This section is split between providing essential formula sheets and quick revision notes, and offering non-test details like the exam pattern, tentative dates, and marking scheme for the upcoming exams.
+                    </p>
+                </div>
+            </div>
+            
+            <p style="text-align: center; margin-top: 3rem; font-size: 1.1rem; color: var(--primary); font-weight: 500;">
+                **Your Next Step:** Click "Login" to access your personalized **Dashboard** and begin your preparation!
+            </p>
+
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>ExamAce is an exam preparation and analysis tool for JEE, NEET, and KCET aspirants.</p>
+        <p>&copy; 2025 ExamAce. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>

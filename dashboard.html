@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ExamAce</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #374151;
+            background-color: #f9fafb;
+            min-height: 100vh;
+        }
+
+        /* Color variables for consistency */
+        :root {
+            --primary: #15803d;
+            --primary-foreground: #ffffff;
+            --secondary: #84cc16;
+            --card: #ffffff;
+            --muted: #f3f4f6;
+            --muted-foreground: #6b7280;
+            --border: #e5e7eb;
+            --foreground: #374151;
+        }
+
+        /* --- Unified Navigation styles --- */
+        .navbar {
+            background-color: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 4rem;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Desktop Menu (Default) */
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        /* Mobile Menu (Hidden by default in desktop) */
+        .mobile-menu-btn { 
+            display: none; 
+            background: none; 
+            border: none; 
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            color: var(--foreground);
+            padding: 0.5rem;
+        }
+        .mobile-menu { 
+            display: none; 
+            background-color: var(--card); 
+            border-top: 1px solid var(--border); 
+            padding: 1rem; 
+        }
+        .mobile-menu.active { 
+            display: block; 
+        }
+        .mobile-nav-links { 
+            list-style: none; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1rem; 
+        }
+
+        .nav-link {
+            color: var(--foreground);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            padding: 0 0.2rem; /* Added padding for link hover area */
+            line-height: 2; /* Ensure spacing in mobile menu */
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary); /* Added visual indicator for active/hover */
+        }
+        
+        .mobile-nav-links .nav-link {
+            border-bottom: none; /* Remove desktop underline in mobile menu */
+            padding: 0.5rem 0;
+            display: block;
+        }
+        
+        .mobile-nav-links .nav-link.active {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .nav-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 2rem;
+            height: 2rem;
+            background-color: var(--primary);
+            color: var(--primary-foreground);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--foreground);
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--muted);
+        }
+
+        /* Main content */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+        
+        #loading-state { text-align: center; padding: 4rem; }
+        
+        .welcome-section {
+            margin-bottom: 2rem;
+        }
+
+        .welcome-title {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-subtitle {
+            color: var(--muted-foreground);
+            font-size: 1.125rem;
+        }
+
+        /* Card styles */
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Test list styles */
+        .test-list { list-style: none; }
+        .test-item {
+            display: grid;
+            grid-template-columns: 1fr auto; /* Adjusted for button on the right */
+            align-items: center;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--border);
+        }
+        .test-item:last-child { margin-bottom: 0; }
+        
+        .test-info h4 { font-weight: 600; font-size: 1.125rem; }
+        .test-meta { color: var(--muted-foreground); font-size: 0.875rem; display: flex; gap: 1rem; }
+        
+        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; font-weight: 500; cursor: pointer; text-decoration: none; text-align: center; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary); color: var(--primary-foreground); }
+        .btn-primary:hover { background-color: #166534; }
+        
+        /* New informational sections */
+        .info-grid {
+            display: grid;
+            /* Changed to fit max 3 cards now that the progress one is removed */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        .info-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+        .info-card p {
+            color: var(--muted-foreground);
+            margin-bottom: 1rem;
+        }
+        .info-card a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 992px) {
+             /* Hide desktop links and user info in tablet/mobile */
+            .nav-links, .nav-user { display: none; }
+            /* Show mobile menu button */
+            .mobile-menu-btn { display: block; }
+            
+            /* General content adjustments */
+            .welcome-title { font-size: 1.75rem; }
+            .test-item { grid-template-columns: 1fr; gap: 0.75rem; }
+            .test-item .btn { width: 100%; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+        @media (min-width: 993px) {
+            /* Ensure desktop elements are shown above breakpoint */
+            .nav-links, .nav-user { display: flex; }
+            .mobile-menu-btn, .mobile-menu { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="dashboard.html" class="nav-brand">ExamAce</a>
+            <!-- Desktop Links -->
+            <ul class="nav-links">
+                <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
+                <li><a href="resources.html" class="nav-link">Resources</a></li>
+                <li><a href="tips.html" class="nav-link">Formulas & Revision</a></li>
+                <li><a href="info.html" class="nav-link">Exam Info</a></li>
+            </ul>
+            <!-- Desktop User/Logout -->
+            <div class="nav-user">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <!-- Logout is now a separate element for unified mobile/desktop handling -->
+                <a href="#" id="logout-btn" class="nav-link" style="border-bottom: none;">Logout</a>
+            </div>
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-btn" id="mobile-menu-btn">&#9776;</button>
+        </div>
+        <!-- Mobile Menu (Only visible on small screens when active) -->
+        <div class="mobile-menu" id="mobile-menu">
+            <ul class="mobile-nav-links">
+                <li><a href="dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
+                <li><a href="resources.html" class="nav-link">Resources</a></li>
+                <li><a href="tips.html" class="nav-link">Formulas & Revision</a></li>
+                <li><a href="info.html" class="nav-link">Exam Info</a></li>
+                
+                <!-- Mobile Logout Link -->
+                <li><a href="#" id="mobile-logout-btn" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        <div id="loading-state"><h1>Loading Dashboard...</h1></div>
+
+        <div id="dashboard-content" style="display:none;">
+            <section class="welcome-section">
+                <h1 class="welcome-title" id="welcome-title">Welcome to ExamAce!</h1>
+                <p class="welcome-subtitle">Your central hub for exam preparation.</p>
+            </section>
+
+            <section class="card">
+                <h2 class="card-title">Latest Available Mock Tests</h2>
+                <ul class="test-list" id="available-tests-list">
+                    <!-- Updated with the 4 requested tests -->
+                    <li class="test-item">
+                        <div class="test-info">
+                            <h4>JEE Main Mock 1</h4>
+                            <div class="test-meta">
+                                <span>90 Questions</span>
+                                <span>&bull;</span>
+                                <span>180 mins</span>
+                                <span>&bull;</span>
+                                <span>360 Marks</span>
+                            </div>
+                        </div>
+                      
+                    </li>
+                    <li class="test-item">
+                        <div class="test-info">
+                            <h4>NEET Mock 1</h4>
+                            <div class="test-meta">
+                                <span>200 Questions (180 to attempt)</span>
+                                <span>&bull;</span>
+                                <span>200 mins</span>
+                                <span>&bull;</span>
+                                <span>720 Marks</span>
+                            </div>
+                        </div>
+                       
+                    </li>
+                     <li class="test-item">
+                        <div class="test-info">
+                            <h4>Mechanics Physics Subjective 1</h4>
+                            <div class="test-meta">
+                                <span>10 Questions</span>
+                                <span>&bull;</span>
+                                <span>60 mins</span>
+                                <span>&bull;</span>
+                                <span>50 Marks</span>
+                            </div>
+                        </div>
+                        
+                    </li>
+                     <li class="test-item">
+                        <div class="test-info">
+                            <h4>KCET Maths 1</h4>
+                            <div class="test-meta">
+                                <span>60 Questions</span>
+                                <span>&bull;</span>
+                                <span>80 mins</span>
+                                <span>&bull;</span>
+                                <span>60 Marks</span>
+                            </div>
+                        </div>
+                      
+                    </li>
+                </ul>
+                <a href="test-selection.html" class="btn btn-primary" style="margin-top: 1.5rem; display: block;">See all tests</a>
+            </section>
+
+            <section class="info-grid">
+                <!-- Removed 'Track Your Progress' card -->
+                <div class="info-card">
+                    <h3>Explore Study Resources</h3>
+                    <p>Find a collection of previous year's question papers </p>
+                    <a href="resources.html">Go to Resources →</a>
+                </div>
+                <div class="info-card">
+                    <h3>Get Formulas & Revision Notes</h3>
+                    <p>Find quick tips, revision notes, and shortcuts to help you solve problems faster and improve your overall speed.</p>
+                    <a href="tips.html">Go to Formulas & Revision →</a>
+                </div>
+                 <div class="info-card">
+                    <h3>Understand Exam Structure</h3>
+                    <p>Get the latest information, syllabus, and pattern for all major competitive exams like JEE, NEET, and KCET.</p>
+                    <a href="info.html">Go to Exam Info →</a>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // Use the same Firebase config from your other pages
+        const firebaseConfig = {
+          apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
+          authDomain: "testseries-38752.firebaseapp.com",
+          projectId: "testseries-38752",
+          storageBucket: "testseries-38752.firebasestorage.app",
+          messagingSenderId: "519384534407",
+          appId: "1:519384534407:web:201265a9d703708334d722"
+        };
+      
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- AUTHENTICATION & DATA LOADING (FIXED) ---
+        onAuthStateChanged(auth, user => {
+            // CRITICAL FIX: Only allow non-anonymous users (those with an email login)
+            if (user && !user.isAnonymous) { 
+                loadDashboardData(user);
+            } else {
+                // Redirect if not logged in or if the user is anonymous
+                window.location.href = 'login.html';
+            }
+        });
+
+        async function loadDashboardData(user) {
+            try {
+                // Fetch user's name
+                // NOTE: Using a placeholder user document fetch, assuming this logic is needed for existing features.
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+
+                // User's name for welcome message
+                // user.email is guaranteed to exist here due to the check above
+                const userName = user.displayName || user.email || 'User'; 
+                updateWelcomeMessage(userName);
+
+                // Show content
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'block';
+
+            } catch (error) {
+                console.error("Error loading dashboard data:", error);
+                document.getElementById('loading-state').innerHTML = '<h1>Could not load dashboard. Please check your connection or permissions.</h1>';
+            }
+        }
+
+        // --- UI UPDATE FUNCTIONS ---
+
+        function updateWelcomeMessage(name) {
+            document.getElementById('welcome-title').textContent = `Welcome, ${name.split('@')[0]}!`;
+            document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
+        }
+
+        // --- EVENT LISTENERS ---
+        const handleLogout = (event) => {
+            event.preventDefault();
+            signOut(auth)
+                .then(() => {
+                    window.location.href = 'login.html';
+                })
+                .catch(error => console.error('Sign out error', error));
+        };
+        
+        document.getElementById('logout-btn').addEventListener('click', handleLogout);
+        document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
