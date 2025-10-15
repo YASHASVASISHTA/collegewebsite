@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Interface - ExamAce</title>
+    <!-- KaTeX CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <style>
         /* Reset and base styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -62,7 +64,7 @@
         .question-image {
             max-width: 100%;
             height: auto;
-            max-height: 40vh; /* Limit size in question area */
+            max-height: 40vh;
             border: 1px solid var(--border);
             border-radius: 0.5rem;
             margin-bottom: 2rem;
@@ -79,6 +81,8 @@
         .option.selected { border-color: var(--primary); background-color: var(--primary); color: var(--primary-foreground); }
         .option-label { background-color: var(--border); width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0; }
         .option.selected .option-label { background-color: var(--primary-foreground); color: var(--primary); }
+        .option-text { flex: 1; }
+        .option-text .katex { font-size: 1.05em; }
         
         /* New styling for fill-in-the-blanks input */
         .fill-in-the-blanks-input {
@@ -163,7 +167,6 @@
             .test-header { padding: 0.5rem 1rem; } .test-title { font-size: 1rem; }
         }
         @media (max-width: 480px) {
-            /* Show mobile nav toggle on small screens */
             .mobile-nav-toggle { display: block; }
         }
     </style>
@@ -207,7 +210,6 @@
                     </div>
                      <div class="question-timer" id="question-timer">00:00</div>
                 </div>
-                <!-- Question Text and Image Container -->
                 <div id="question-body">
                     <div class="question-text" id="question-text">Loading question...</div>
                     <div id="image-container"></div>
@@ -229,7 +231,6 @@
         </main>
     </div>
 
-    <!-- Confirmation Modal -->
     <div class="modal-overlay hidden" id="submit-modal">
         <div class="modal">
             <h3>Submit Test?</h3>
@@ -241,7 +242,6 @@
         </div>
     </div>
     
-    <!-- Image Zoom Modal -->
     <div class="hidden" id="image-modal-overlay">
         <div id="image-modal-content">
             <img id="zoomed-image" src="" alt="Zoomed Question Image">
@@ -249,10 +249,10 @@
         </div>
     </div>
 
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import katex from "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.mjs";
         
         const firebaseConfig = {
           apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
@@ -273,12 +273,10 @@
                 this.examTimerInterval = null;
                 this.questionTimerInterval = null;
                 
-                // CRITICAL FIX: Only allow non-anonymous users to proceed
                 onAuthStateChanged(auth, user => {
                     if (user && !user.isAnonymous) {
                         this.loadTestSession();
                     } else {
-                        // Redirect if not logged in or if the user is anonymous
                         window.location.href = 'login.html';
                     }
                 });
@@ -286,14 +284,29 @@
                 this.initializeEventListeners();
             }
             
+            // UPDATED: Render LaTeX using ** delimiters instead of {}
+            renderLatex(text) {
+                if (!text) return '';
+                
+                // Replace **latex_content** with rendered LaTeX
+                return text.replace(/\*\*([^*]+)\*\*/g, (match, latex) => {
+                    try {
+                        return katex.renderToString(latex, {
+                            throwOnError: false,
+                            displayMode: false
+                        });
+                    } catch (e) {
+                        console.error('LaTeX rendering error:', e);
+                        return match;
+                    }
+                });
+            }
+            
             loadTestSession() {
                 const sessionStr = sessionStorage.getItem('test_session');
                 if (!sessionStr) {
-                    // Using a custom message element instead of alert()
                     const container = document.getElementById('test-container');
                     container.innerHTML = `<div style="text-align: center; padding: 4rem;"><h1>No active test found.</h1><p>Please select a test from the <a href="test-selection.html" style="color: var(--primary); font-weight: 600;">Mock Tests</a> page.</p></div>`;
-                    console.error('Could not find an active test session. Redirecting.');
-                    // window.location.href = 'test-selection.html';
                     return;
                 }
                 try {
@@ -303,11 +316,10 @@
                     }
                     this.initializeInterface();
                 } catch (error) {
-                    console.error('CRITICAL: Failed to parse session. Redirecting.', error);
+                    console.error('CRITICAL: Failed to parse session.', error);
                     const container = document.getElementById('test-container');
                     container.innerHTML = `<div style="text-align: center; padding: 4rem;"><h1>Session Data Error.</h1><p>Your test session data appears to be corrupt. Please select a test again from <a href="test-selection.html" style="color: var(--primary); font-weight: 600;">Mock Tests</a>.</p></div>`;
                     sessionStorage.removeItem('test_session');
-                    // window.location.href = 'test-selection.html';
                 }
             }
 
@@ -333,7 +345,7 @@
 
             updateQuestionNavigation() {
                 document.querySelectorAll('.question-nav-item').forEach((item, index) => {
-                    item.className = 'question-nav-item'; // Reset classes
+                    item.className = 'question-nav-item';
                     if (index === this.currentQuestionIndex) item.classList.add('current');
                     
                     const isAnswered = this.testSession.answers[index] !== undefined;
@@ -353,7 +365,7 @@
             
             loadQuestion(index) {
                 if (index < 0 || index >= this.testSession.testData.questions_data.length) {
-                    return; // Prevent out-of-bounds navigation
+                    return;
                 }
 
                 if (this.questionTimerInterval) clearInterval(this.questionTimerInterval);
@@ -364,9 +376,8 @@
                 const q = this.testSession.testData.questions_data[index];
                 document.getElementById('question-number').textContent = `Question ${index + 1}`;
                 document.getElementById('question-subject').textContent = q.subject;
-                document.getElementById('question-text').innerHTML = q.questionText;
+                document.getElementById('question-text').innerHTML = this.renderLatex(q.questionText);
 
-                // --- IMAGE RENDERING LOGIC ---
                 const imageContainer = document.getElementById('image-container');
                 imageContainer.innerHTML = '';
                 
@@ -375,19 +386,13 @@
                     img.src = q.questionImageUrl;
                     img.className = 'question-image';
                     img.alt = `Question ${index + 1} Image`;
-                    
-                    // Add click listener for zoom modal
                     img.addEventListener('click', () => this.openImageModal(q.questionImageUrl));
-                    
                     imageContainer.appendChild(img);
                 }
-                // --- END IMAGE RENDERING LOGIC ---
-
 
                 const optionsContainer = document.getElementById('options-container');
-                optionsContainer.innerHTML = ''; // Clear previous content
+                optionsContainer.innerHTML = '';
 
-                // Check for fill-in-the-blanks format
                 if (q.options.length === 1 && q.options[0] === 'nil') {
                     const input = document.createElement('input');
                     input.type = 'number';
@@ -405,20 +410,17 @@
                     });
                     
                     optionsContainer.appendChild(input);
-                    document.getElementById('save-next-btn').disabled = false;
                 } else {
-                    // Render regular multiple-choice options
                     optionsContainer.innerHTML = q.options.map((option, optIndex) => `
                         <div class="option ${this.testSession.answers[index] === optIndex ? 'selected' : ''}" data-option="${optIndex}">
                             <div class="option-label">${String.fromCharCode(65 + optIndex)}</div>
-                            <div class="option-text">${option}</div>
+                            <div class="option-text">${this.renderLatex(option)}</div>
                         </div>
                     `).join('');
                     
                     optionsContainer.querySelectorAll('.option').forEach(option => {
                         option.addEventListener('click', () => this.selectOption(parseInt(option.dataset.option)));
                     });
-                     document.getElementById('save-next-btn').disabled = false;
                 }
 
                 this.updateControls();
@@ -427,7 +429,6 @@
                 this.saveSession();
             }
 
-            // --- IMAGE MODAL FUNCTIONS ---
             openImageModal(imageUrl) {
                 const modalOverlay = document.getElementById('image-modal-overlay');
                 const zoomedImage = document.getElementById('zoomed-image');
@@ -438,8 +439,6 @@
             closeImageModal() {
                 document.getElementById('image-modal-overlay').classList.add('hidden');
             }
-            // --- END IMAGE MODAL FUNCTIONS ---
-
 
             selectOption(optionIndex) {
                 this.testSession.answers[this.currentQuestionIndex] = optionIndex;
@@ -556,8 +555,13 @@
                 });
 
                 return {
-                    testData: this.testSession.testData, answers, correct, incorrect, unanswered,
-                    finalScore: Math.max(0, finalScore), subjectWise,
+                    testData: this.testSession.testData, 
+                    answers, 
+                    correct, 
+                    incorrect, 
+                    unanswered,
+                    finalScore: Math.max(0, finalScore), 
+                    subjectWise,
                     percentage: testData.marks > 0 ? Math.max(0, (finalScore / testData.marks) * 100) : 0,
                     completedAt: new Date().toISOString(),
                     timeTaken: (this.testSession.testData.duration * 60) - this.testSession.timeLeft,
@@ -604,14 +608,12 @@
                 document.getElementById('mobile-nav-toggle').addEventListener('click', () => document.getElementById('question-nav').classList.add('open'));
                 document.getElementById('nav-toggle-close').addEventListener('click', () => document.getElementById('question-nav').classList.remove('open'));
                 
-                // --- IMAGE MODAL LISTENERS ---
                 document.getElementById('close-image-btn').addEventListener('click', () => this.closeImageModal());
                 document.getElementById('image-modal-overlay').addEventListener('click', (e) => {
                     if (e.target.id === 'image-modal-overlay') {
                         this.closeImageModal();
                     }
                 });
-                // --- END IMAGE MODAL LISTENERS ---
             }
         }
 
