@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin: Edit Test Aggregates - ExamAce</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #15803d; --primary-foreground: #ffffff; --card: #ffffff; --border: #e5e7eb;
+            --muted: #f9fafb; --muted-foreground: #6b7280; --destructive: #b91c1c;
+        }
+        body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #374151; background-color: var(--muted); }
+        
+        /* Utility Classes from Tailwind are heavily used below */
+
+        /* Custom Styles for better visual appeal */
+        .shadow-custom { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .input-style { 
+            @apply w-full p-2 border border-gray-300 rounded-lg text-sm transition-all duration-200 focus:ring-2 focus:ring-green-600 focus:border-green-600;
+        }
+        .btn-primary { 
+            @apply flex items-center justify-center px-4 py-2 font-semibold rounded-lg transition-all duration-300 shadow-md;
+        }
+        .spinner { 
+            display: inline-block; width: 1.25rem; height: 1.25rem; border: 3px solid rgba(255, 255, 255, 0.3); border-top-color: var(--primary-foreground); border-radius: 50%; animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Status colors */
+        .status.success { color: var(--primary); } 
+        .status.error { color: var(--destructive); }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+
+    <div id="login-view" class="flex items-center justify-center min-h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-custom w-full max-w-sm">
+            <h1 class="text-2xl font-bold text-center text-green-700 mb-6">Admin Login</h1>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="email" class="input-style" required value="test@admin.com">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" class="input-style" required value="password">
+                </div>
+                <button type="submit" class="btn-primary bg-green-700 text-white hover:bg-green-600" id="login-btn">
+                    Login
+                </button>
+                <div id="login-status" class="status text-center mt-4 text-sm font-medium h-6"></div>
+            </form>
+            <div class="text-xs text-gray-500 mt-4 p-3 bg-gray-100 rounded-lg">
+                <p>Use demo credentials: **test@admin.com** / **password**</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <div id="main-content" class="hidden container mx-auto p-4 md:p-8">
+        
+        <!-- List View (Aggregate Editor) -->
+        <div id="list-view">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4">
+                <h1 class="text-3xl font-extrabold text-green-700">Test Aggregates Editor</h1>
+                <button id="save-all-btn" class="btn-primary bg-blue-600 text-white hover:bg-blue-700 mt-4 md:mt-0 w-full md:w-auto" disabled>
+                    Save All Aggregate Changes
+                </button>
+            </div>
+
+            <div id="main-status" class="status text-center mb-4 text-lg font-semibold h-8"></div>
+
+            <div class="bg-white p-4 rounded-xl shadow-lg mb-6">
+                <input type="text" id="search-input" placeholder="Filter by Title or ID..." class="input-style" />
+            </div>
+
+            <div id="test-list-container" class="space-y-6">
+                <p id="loading-message" class="text-center text-gray-500 italic">Loading tests...</p>
+            </div>
+        </div>
+
+        <!-- Detail View (Full Test Editor) -->
+        <div id="detail-view" class="hidden">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <button id="back-to-list-btn" class="btn-primary bg-gray-500 text-white hover:bg-gray-600 w-auto">
+                    &larr; Back to List
+                </button>
+                <h1 id="detail-title" class="text-3xl font-extrabold text-green-700 ml-4 truncate">Edit Test: </h1>
+            </div>
+            
+            <div id="detail-status" class="status text-center mb-4 text-lg font-semibold h-8"></div>
+            
+            <!-- Full Test Form will be rendered here -->
+            <div id="detail-form-container" class="space-y-6">
+                
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold mb-4">Metadata</h2>
+                    <div id="metadata-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Metadata inputs rendered here -->
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold mb-4">Questions (<span id="question-count">0</span>)</h2>
+                    <div id="questions-detail-list" class="space-y-4">
+                        <!-- Question forms rendered here -->
+                    </div>
+                </div>
+
+                <div class="py-4">
+                    <button id="save-detail-btn" class="btn-primary bg-green-600 text-white hover:bg-green-700 w-full max-w-sm mx-auto">
+                        Save Full Test Details
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- CONFIGURATION (Copied from upload.html) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
+            authDomain: "testseries-38752.firebaseapp.com",
+            projectId: "testseries-38752",
+            storageBucket: "testseries-38752.firebasestorage.app",
+            messagingSenderId: "519384534407",
+            appId: "1:519384534407:web:201265a9d703708334d722"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        class TestEditor {
+            constructor() {
+                this.originalTests = []; 
+                this.filteredTests = []; 
+                this.activeTestId = null; // ID of the test currently being edited in the detail view
+                this.activeTestDetails = null; // Full data of the test currently being edited
+
+                this.setupAuthListener();
+                this.setupEventListeners();
+            }
+
+            setupAuthListener() {
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        document.getElementById('login-view').classList.add('hidden');
+                        document.getElementById('main-content').classList.remove('hidden');
+                        this.fetchTests();
+                    } else {
+                        document.getElementById('login-view').classList.remove('hidden');
+                        document.getElementById('main-content').classList.add('hidden');
+                    }
+                });
+            }
+
+            setupEventListeners() {
+                document.getElementById('login-form').addEventListener('submit', e => this.handleLogin(e));
+                document.getElementById('search-input').addEventListener('input', e => this.filterTests(e.target.value));
+                document.getElementById('save-all-btn').addEventListener('click', () => this.saveChanges());
+                document.getElementById('back-to-list-btn').addEventListener('click', () => this.showListView());
+                document.getElementById('save-detail-btn').addEventListener('click', () => this.saveDetailedTest());
+                
+                // Listener for the dynamically rendered 'Edit Full Test' buttons
+                document.getElementById('test-list-container').addEventListener('click', (e) => {
+                    const target = e.target.closest('.edit-full-btn');
+                    if (target) {
+                        const testId = target.dataset.id;
+                        this.loadTestDetails(testId);
+                    }
+                });
+            }
+            
+            // --- VIEW MANAGEMENT ---
+            showListView() {
+                document.getElementById('list-view').classList.remove('hidden');
+                document.getElementById('detail-view').classList.add('hidden');
+                this.activeTestId = null;
+                this.activeTestDetails = null;
+                document.getElementById('main-status').textContent = 'Back to list view.';
+            }
+
+            showDetailView(title) {
+                document.getElementById('list-view').classList.add('hidden');
+                document.getElementById('detail-view').classList.remove('hidden');
+                document.getElementById('detail-title').textContent = `Edit Test: ${title}`;
+                document.getElementById('detail-status').textContent = '';
+            }
+
+            // --- AUTH & FETCH AGGREGATES ---
+
+            async handleLogin(e) {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const statusDiv = document.getElementById('login-status');
+                const loginBtn = document.getElementById('login-btn');
+                
+                this.setLoading(loginBtn, statusDiv, 'Logging in...');
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                } catch (error) {
+                    this.setError(statusDiv, error.message);
+                } finally {
+                    this.setIdle(loginBtn, 'Login');
+                }
+            }
+            
+            async fetchTests() {
+                const statusDiv = document.getElementById('main-status');
+                const loadingMessage = document.getElementById('loading-message');
+                
+                if (loadingMessage) {
+                    loadingMessage.textContent = 'Loading tests...';
+                }
+                
+                try {
+                    const aggregateDocRef = doc(db, "test_aggregates", "all_tests");
+                    const aggregateDocSnap = await getDoc(aggregateDocRef);
+
+                    if (aggregateDocSnap.exists()) {
+                        const data = aggregateDocSnap.data();
+                        this.originalTests = data.tests || [];
+                        
+                        const currentQuery = document.getElementById('search-input').value;
+                        this.filteredTests = this.applyFilter(this.originalTests, currentQuery);
+
+                        this.renderTests();
+                        this.setSuccess(statusDiv, `Successfully loaded ${this.originalTests.length} tests.`);
+                    } else {
+                        this.originalTests = [];
+                        this.filteredTests = [];
+                        this.renderTests();
+                        this.setError(statusDiv, "No 'all_tests' document found in Firestore.");
+                    }
+                } catch (error) {
+                    this.setError(statusDiv, `Failed to fetch tests: ${error.message}`);
+                    console.error("Fetch Error:", error);
+                }
+                
+                if (loadingMessage) {
+                    loadingMessage.textContent = ''; 
+                }
+            }
+            
+            // --- RENDERING AGGREGATES (LIST VIEW) ---
+            renderTests() {
+                const listContainer = document.getElementById('test-list-container');
+                listContainer.innerHTML = '';
+                
+                if (this.filteredTests.length === 0) {
+                    listContainer.innerHTML = `<p class="text-center text-gray-500 italic p-4">No tests found matching your search criteria.</p>`;
+                    document.getElementById('save-all-btn').disabled = true;
+                    return;
+                }
+
+                this.filteredTests.forEach((test) => {
+                    const originalIndex = this.originalTests.findIndex(t => t.id === test.id);
+                    
+                    const testItem = document.createElement('div');
+                    testItem.className = 'test-item bg-white p-6 rounded-xl shadow-md border border-gray-200';
+                    testItem.dataset.id = test.id;
+                    testItem.dataset.originalIndex = originalIndex;
+
+                    const availabilityBadge = test.available
+                        ? '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">Available</span>'
+                        : '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Unavailable</span>';
+                    
+                    const syllabusBadge = test.C 
+                        ? '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">Chapterwise</span>'
+                        : '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Full Syllabus</span>';
+
+                    testItem.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-bold text-gray-800">${test.title}</h3>
+                            <div class="flex space-x-2">
+                                ${availabilityBadge}
+                                ${syllabusBadge}
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4"><strong>ID:</strong> ${test.id} | <strong>Type:</strong> ${test.type}</p>
+                        
+                        <div class="space-y-3 pb-4 border-b border-gray-100">
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                <input type="text" class="input-style edit-field" data-field="title" value="${test.title}"></div>
+                            
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Availability</label>
+                                <select class="input-style edit-field" data-field="available">
+                                    <option value="true" ${test.available ? 'selected' : ''}>Available (True)</option>
+                                    <option value="false" ${!test.available ? 'selected' : ''}>Unavailable (False)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="pt-4 flex justify-end">
+                            <button data-id="${test.id}" class="btn-primary edit-full-btn bg-indigo-600 text-white hover:bg-indigo-700 w-auto text-sm">
+                                Edit Full Test Details
+                            </button>
+                        </div>
+                    `;
+                    listContainer.appendChild(testItem);
+                });
+                
+                document.getElementById('save-all-btn').disabled = false;
+            }
+
+            applyFilter(tests, query) {
+                const lowerQuery = query.toLowerCase();
+                if (!lowerQuery) {
+                    return tests;
+                } else {
+                    return tests.filter(test =>
+                        test.title.toLowerCase().includes(lowerQuery) ||
+                        test.id.toLowerCase().includes(lowerQuery)
+                    );
+                }
+            }
+
+            filterTests(query) {
+                this.filteredTests = this.applyFilter(this.originalTests, query);
+                this.renderTests();
+            }
+
+            // --- SAVING AGGREGATES (LIST VIEW) ---
+            async saveChanges() {
+                const statusDiv = document.getElementById('main-status');
+                const saveBtn = document.getElementById('save-all-btn');
+                this.setLoading(saveBtn, statusDiv, 'Saving Aggregates...');
+                
+                try {
+                    let testsToSave = JSON.parse(JSON.stringify(this.originalTests));
+                    
+                    document.querySelectorAll('.test-item').forEach(testElement => {
+                        const originalIndex = parseInt(testElement.dataset.originalIndex, 10);
+                        const testId = testElement.dataset.id;
+
+                        if (originalIndex >= 0 && testsToSave[originalIndex].id === testId) {
+                            const updatedItem = testsToSave[originalIndex];
+
+                            testElement.querySelectorAll('.edit-field').forEach(input => {
+                                const field = input.dataset.field;
+                                let value = input.value;
+
+                                if (value === 'true') {
+                                    value = true;
+                                } else if (value === 'false') {
+                                    value = false;
+                                }
+                                
+                                updatedItem[field] = value;
+                            });
+                        }
+                    });
+
+                    const aggregateDocRef = doc(db, "test_aggregates", "all_tests");
+                    await setDoc(aggregateDocRef, { 
+                        tests: testsToSave,
+                        lastUpdated: new Date().toISOString()
+                    });
+                    
+                    this.setSuccess(statusDiv, `Successfully saved ${testsToSave.length} aggregate items.`);
+                    
+                    this.fetchTests();
+
+                } catch (error) {
+                    this.setError(statusDiv, `Failed to save changes: ${error.message}`);
+                    console.error("Save Error:", error);
+                } finally {
+                    this.setIdle(saveBtn, 'Save All Aggregate Changes');
+                }
+            }
+
+
+            // --- DATA FETCHING & RENDERING (DETAIL VIEW) ---
+            async loadTestDetails(testId) {
+                const statusDiv = document.getElementById('detail-status');
+                this.activeTestId = testId;
+                statusDiv.textContent = 'Loading test details...';
+                
+                try {
+                    const testDocRef = doc(db, "tests", testId);
+                    const testDocSnap = await getDoc(testDocRef);
+
+                    if (testDocSnap.exists()) {
+                        this.activeTestDetails = testDocSnap.data();
+                        this.showDetailView(this.activeTestDetails.title);
+                        this.renderDetailsForm(this.activeTestDetails);
+                        this.setSuccess(statusDiv, `Details for test ID: ${testId} loaded.`);
+                    } else {
+                        throw new Error(`Full test document for ID: ${testId} not found in 'tests' collection.`);
+                    }
+                } catch (error) {
+                    this.setError(statusDiv, error.message);
+                    console.error("Load Detail Error:", error);
+                    this.showListView(); // Go back to list on critical error
+                }
+            }
+            
+            renderDetailsForm(testData) {
+                const metadataForm = document.getElementById('metadata-form');
+                const questionsList = document.getElementById('questions-detail-list');
+                const questionCount = document.getElementById('question-count');
+
+                metadataForm.innerHTML = '';
+                questionsList.innerHTML = '';
+                questionCount.textContent = testData.questions_data.length;
+
+                // 1. Render Metadata fields (reusing input-style for consistency)
+                const metadataFields = [
+                    { label: 'Title', key: 'title', type: 'text', value: testData.title },
+                    { label: 'Description', key: 'description', type: 'text', value: testData.description },
+                    { label: 'Exam Type', key: 'type', type: 'text', value: testData.type },
+                    { label: 'Duration (mins)', key: 'duration', type: 'number', value: testData.duration },
+                    { label: 'Marks', key: 'marks', type: 'number', value: testData.marks, readonly: true },
+                    { label: 'Questions', key: 'questions', type: 'number', value: testData.questions, readonly: true },
+                    { label: 'Negative Marks', key: 'negativeMarks', type: 'number', value: testData.negativeMarks },
+                    { label: 'Subjects (comma-sep)', key: 'subjects', type: 'text', value: testData.subjects ? testData.subjects.join(', ') : '' },
+                ];
+                
+                metadataFields.forEach(field => {
+                    metadataForm.innerHTML += `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">${field.label}</label>
+                            <input type="${field.type}" class="input-style detail-meta-field" data-key="${field.key}" value="${field.value}" ${field.readonly ? 'readonly' : ''}>
+                        </div>
+                    `;
+                });
+
+                // Add boolean fields as selects
+                metadataForm.innerHTML += `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Syllabus Type (C)</label>
+                        <select class="input-style detail-meta-field" data-key="Chapterwise">
+                            <option value="true" ${testData.Chapterwise ? 'selected' : ''}>Chapterwise (True)</option>
+                            <option value="false" ${!testData.Chapterwise ? 'selected' : ''}>Full Syllabus (False)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Availability</label>
+                        <select class="input-style detail-meta-field" data-key="available">
+                            <option value="true" ${testData.available ? 'selected' : ''}>Available (True)</option>
+                            <option value="false" ${!testData.available ? 'selected' : ''}>Unavailable (False)</option>
+                        </select>
+                    </div>
+                `;
+
+                // 2. Render Questions Data
+                testData.questions_data.forEach((q, i) => {
+                    const isMCQ = q.questionType === 'MCQ';
+                    
+                    // Ensure q.options is an array with at least 4 elements if it's an MCQ
+                    const optionsArray = isMCQ && Array.isArray(q.options) && q.options.length >= 4 
+                        ? q.options 
+                        : isMCQ ? ['', '', '', ''] : [''];
+
+                    const optionsHTML = isMCQ ? `
+                        <div class="grid grid-cols-2 gap-4">
+                            ${optionsArray.slice(0, 4).map((opt, idx) => `
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Option ${String.fromCharCode(65 + idx)}</label>
+                                    <textarea class="input-style detail-q-field" data-index="${i}" data-key="option-${idx}" rows="2">${opt}</textarea>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Correct Answer (Index 0-3)</label>
+                            <input type="number" min="0" max="3" class="input-style detail-q-field" data-index="${i}" data-key="correctAnswer" value="${q.correctAnswer}">
+                        </div>
+                    ` : `
+                        <div class="mt-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Numerical Correct Answer</label>
+                            <input type="number" step="0.01" class="input-style detail-q-field" data-index="${i}" data-key="correctAnswer" value="${q.correctAnswer}">
+                        </div>
+                    `;
+
+                    questionsList.innerHTML += `
+                        <div class="p-4 border border-gray-100 rounded-lg bg-gray-50">
+                            <h4 class="font-semibold text-lg mb-3">Q${i + 1} (${q.questionType})</h4>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                                    <textarea class="input-style detail-q-field" data-index="${i}" data-key="questionText" rows="4">${q.questionText}</textarea>
+                                </div>
+                                
+                                ${optionsHTML}
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Solution</label>
+                                    <textarea class="input-style detail-q-field" data-index="${i}" data-key="solution" rows="3">${q.solution}</textarea>
+                                </div>
+                                
+                                <div class="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                                    <p>Subject: <input type="text" class="input-style detail-q-field w-1/3" data-index="${i}" data-key="subject" value="${q.subject}"></p>
+                                    <p>Topic: <input type="text" class="input-style detail-q-field w-1/3" data-index="${i}" data-key="topic" value="${q.topic}"></p>
+                                    ${q.questionImageUrl ? `<p>Q Image URL: <span class="break-words">${q.questionImageUrl}</span></p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            // --- SAVING DETAILS (DETAIL VIEW) ---
+            async saveDetailedTest() {
+                const statusDiv = document.getElementById('detail-status');
+                const saveBtn = document.getElementById('save-detail-btn');
+                this.setLoading(saveBtn, statusDiv, 'Saving Full Test...');
+                
+                try {
+                    if (!this.activeTestDetails || !this.activeTestId) {
+                        throw new Error("No active test selected for saving.");
+                    }
+
+                    // 1. Update Metadata
+                    let newTestDetails = JSON.parse(JSON.stringify(this.activeTestDetails));
+                    let newAggregateMetadata = {}; // Data for the aggregate document
+
+                    document.querySelectorAll('.detail-meta-field').forEach(input => {
+                        const key = input.dataset.key;
+                        let value = input.value;
+
+                        if (input.type === 'number') {
+                            value = parseFloat(value);
+                        } else if (value === 'true') {
+                            value = true;
+                        } else if (value === 'false') {
+                            value = false;
+                        } else if (key === 'subjects') {
+                             value = value.split(',').map(s => s.trim()).filter(s => s);
+                        }
+
+                        newTestDetails[key] = value;
+                        
+                        // Collect changes for the aggregate document (C and available are booleans)
+                        if (['title', 'description', 'type', 'duration', 'questions', 'subjects', 'marks', 'negativeMarks', 'available'].includes(key)) {
+                            newAggregateMetadata[key] = value;
+                        } else if (key === 'Chapterwise') {
+                            newAggregateMetadata['C'] = value;
+                        }
+                    });
+
+
+                    // 2. Update Questions Data
+                    document.querySelectorAll('.detail-q-field').forEach(input => {
+                        const index = parseInt(input.dataset.index, 10);
+                        const key = input.dataset.key;
+                        let value = input.value;
+                        
+                        // Handle numbers
+                        if (input.type === 'number') {
+                            value = parseFloat(value);
+                        }
+
+                        if (key.startsWith('option-')) {
+                            // --- FIX APPLIED HERE: Update a specific option in the options array
+                            const optionIndex = parseInt(key.split('-')[1], 10);
+                            
+                            // Ensure options array exists before updating
+                            if (!newTestDetails.questions_data[index].options) {
+                                newTestDetails.questions_data[index].options = [];
+                            }
+                            newTestDetails.questions_data[index].options[optionIndex] = value;
+                        } else {
+                            // Update regular question fields (text, subject, topic, solution, correctAnswer)
+                            newTestDetails.questions_data[index][key] = value;
+                        }
+                    });
+                    
+                    // Final safety check: sync title for metadata
+                    newAggregateMetadata.title = newTestDetails.title;
+                    
+                    // 3. Save full test document
+                    const testDocRef = doc(db, "tests", this.activeTestId);
+                    await setDoc(testDocRef, newTestDetails);
+                    
+                    // 4. Update aggregated list item
+                    const aggregateDocRef = doc(db, "test_aggregates", "all_tests");
+                    const aggregateDocSnap = await getDoc(aggregateDocRef);
+                    let testsList = aggregateDocSnap.exists() ? (aggregateDocSnap.data().tests || []) : [];
+                    
+                    const aggregateIndex = testsList.findIndex(t => t.id === this.activeTestId);
+
+                    if (aggregateIndex > -1) {
+                        // Merge the new metadata into the existing aggregate entry
+                        testsList[aggregateIndex] = { ...testsList[aggregateIndex], ...newAggregateMetadata };
+                        
+                        // Save the full aggregate list back
+                        await setDoc(aggregateDocRef, { tests: testsList, lastUpdated: new Date().toISOString() });
+                    }
+                    
+                    this.setSuccess(statusDiv, `Full test and aggregate metadata saved successfully!`);
+
+                } catch (error) {
+                    this.setError(statusDiv, `Failed to save changes: ${error.message}`);
+                    console.error("Save Detail Error:", error);
+                } finally {
+                    this.setIdle(saveBtn, 'Save Full Test Details');
+                }
+            }
+
+
+            // --- UTILITY METHODS ---
+
+            setLoading(btn, statusDiv, text) {
+                btn.disabled = true;
+                statusDiv.textContent = '';
+                btn.innerHTML = `<div class="spinner"></div><span class="ml-2">${text}</span>`;
+                statusDiv.className = 'status text-center mt-4 text-sm font-medium h-6 text-gray-500';
+            }
+
+            setError(statusDiv, message) {
+                if (statusDiv) {
+                    statusDiv.textContent = `Error: ${message}`;
+                    statusDiv.className = 'status error text-center mt-4 text-sm font-medium h-6';
+                }
+            }
+             setSuccess(statusDiv, message) {
+                if (statusDiv) {
+                    statusDiv.textContent = message;
+                    statusDiv.className = 'status success text-center mt-4 text-sm font-medium h-6';
+                }
+            }
+
+            setIdle(btn, text) {
+                 btn.disabled = false;
+                 btn.innerHTML = `<span>${text}</span>`;
+            }
+        }
+        
+        const editor = new TestEditor();
+    </script>
+</body>
+</html>

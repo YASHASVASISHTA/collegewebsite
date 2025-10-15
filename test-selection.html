@@ -58,7 +58,7 @@
         }
 
         .test-card.locked::after {
-            content: "🔒 Pro";
+            content: "🔒 Premium"; /* Updated tag */
             position: absolute;
             top: 0;
             right: 0;
@@ -123,8 +123,8 @@
     <div id="subscription-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-icon">⚠️</div>
-            <h3 class="modal-title">Subscription Required</h3>
-            <p class="modal-message">This mock test is available exclusively to our **Subscribed Members**. You currently have access to our 5 featured free tests.</p>
+            <h3 class="modal-title">Premium Access Required</h3>
+            <p class="modal-message">This mock test is available exclusively to our **Subscribed Members**. Unlock all tests with a premium plan.</p>
             <button id="modal-close-btn" class="modal-close-btn">Got It!</button>
         </div>
     </div>
@@ -162,7 +162,7 @@
     <main class="main-container">
         <header class="page-header">
             <h1 class="page-title">Available Mock Tests</h1>
-            <p class="page-subtitle">Find the perfect test to advance your preparation. **5 specific tests are available for free!**</p>
+            <p class="page-subtitle">Find the perfect test to advance your preparation. **Tests marked 'Start Test' are available now!**</p>
         </header>
 
         <section class="filter-section">
@@ -186,7 +186,7 @@
                         <option value="Biology">Biology</option>
                     </select>
                 </div>
-                <!-- Updated: Type filter logic based on the C flag -->
+                <!-- Type filter logic based on the C flag -->
                 <div class="filter-group">
                     <label for="type-filter">Type</label>
                     <select id="type-filter" class="filter-select">
@@ -232,14 +232,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Constants for free tier logic - Using user-defined indices: 4, 10, 35, 11, 2
-        const FREE_INDICES = [4, 10, 35, 11, 2];
-        // Map to store the desired display order for free tests: {4: 0, 10: 1, 35: 2, 11: 3, 2: 4}
-        const FREE_ORDER_MAP = new Map();
-        FREE_INDICES.forEach((index, pos) => {
-            FREE_ORDER_MAP.set(index, pos);
-        });
-
         class TestSelectionPage {
             constructor() {
                 this.allTests = [];
@@ -260,7 +252,7 @@
                     } else {
                         this.fetchTests(); 
                         this.initializeEventListeners();
-                        console.log("User not logged in. Showing tests with specific free tier limitations.");
+                        console.log("User not logged in. Showing tests with database-driven availability.");
                     }
                 });
             }
@@ -279,15 +271,14 @@
                     if (docSnap.exists()) {
                         this.allTests = docSnap.data().tests || [];
                         
-                        // Tag each test with its original index and free/premium status
+                        // FIX: Check for the 'available' field and ensure it is a boolean
                         this.allTests = this.allTests.map((test, index) => ({
                             ...test,
-                            originalIndex: index, // Store original index for filtering reference
-                            isFree: FREE_INDICES.includes(index) // Check if index is in the approved list
+                            // 'available' will be true/false as per the database, or false if not present
+                            isAvailable: !!test.available, 
+                            originalIndex: index, // Retain original index for stable sorting
                         }));
 
-                        // FIX: Call applyFilters instead of renderTests directly on initial load
-                        // This ensures the sorting logic runs before the first render.
                         this.applyFilters();
                     } else {
                         console.error("The 'all_tests' document does not exist!");
@@ -347,27 +338,18 @@
                     return examMatch && subjectMatch && typeMatch && durationMatch;
                 });
                 
-                // 2. Apply custom sorting to put free tests first in the specified order
+                // 2. Apply custom sorting to put available tests (isAvailable: true) first, 
+                // followed by blocked tests (isAvailable: false).
+                // Within each group, sort by original index for stable ordering.
                 filtered.sort((a, b) => {
-                    // Primary Sort: Free tests first (descending sort on isFree)
-                    if (a.isFree !== b.isFree) {
-                        // true (1) - false (0) = 1 (positive) -> b comes first (free first)
-                        // false (0) - true (1) = -1 (negative) -> a comes first (free first)
-                        return b.isFree - a.isFree;
+                    // Primary Sort: Available tests first (descending sort on isAvailable)
+                    if (a.isAvailable !== b.isAvailable) {
+                        // true (1) - false (0) = 1 (b comes first) -> AVAILABLE first
+                        return b.isAvailable - a.isAvailable;
                     }
 
-                    // Secondary Sort: If both have the same free/locked status
-                    if (a.isFree && b.isFree) {
-                        // Sort free tests based on the explicit order: 4, 10, 35, 11, 2
-                        const orderA = FREE_ORDER_MAP.get(a.originalIndex);
-                        const orderB = FREE_ORDER_MAP.get(b.originalIndex);
-                        return orderA - orderB;
-                    } else if (!a.isFree && !b.isFree) {
-                        // Sort locked tests based on their original index (0, 1, 3, 5, 6...)
-                        return a.originalIndex - b.originalIndex;
-                    }
-                    
-                    return 0;
+                    // Secondary Sort: If status is the same, use original index for stability
+                    return a.originalIndex - b.originalIndex;
                 });
 
                 this.filteredTests = filtered;
@@ -383,13 +365,13 @@
                 
                 this.stateContainer.style.display = 'none';
                 this.testGrid.innerHTML = this.filteredTests.map((test) => {
-                    // Use the stored isFree status based on original index
-                    const isFree = test.isFree;
+                    // Use the database-driven 'isAvailable' status
+                    const isAvailable = test.isAvailable;
                     
                     // Determine visual indicators
-                    const lockClass = isFree ? '' : 'locked';
-                    const buttonText = isFree ? 'Start Test' : 'Subscribed Material';
-                    const buttonClass = isFree ? 'btn-primary' : 'btn-primary locked-btn';
+                    const lockClass = isAvailable ? '' : 'locked';
+                    const buttonText = isAvailable ? 'Start Test' : 'Upgrade to Premium';
+                    const buttonClass = isAvailable ? 'btn-primary' : 'btn-primary locked-btn';
                     
                     let typeIndicator = '';
                     if (test.C === true) {
@@ -399,11 +381,10 @@
                     }
 
                     return `
-                        <div class="test-card ${lockClass}" data-testid="${test.id}" data-isfree="${isFree}">
+                        <div class="test-card ${lockClass}" data-testid="${test.id}" data-isavailable="${isAvailable}">
                             <div>
                                 <div class="test-header">
                                     <h3 class="test-title">${test.title} ${typeIndicator}</h3>
-                                    <!-- REMOVED: Index display from the description -->
                                     <span class="test-type-tag">${test.type}</span>
                                 </div>
                                 <p class="test-description">${test.description}</p>
@@ -415,22 +396,21 @@
                                     <span>🎯 ${test.marks} Marks</span>
                                     <span>⚠️ -${test.negativeMarks} Negative</span>
                                 </div>
-                                <button class="${buttonClass}" data-testid="${test.id}" data-isfree="${isFree ? 'true' : 'false'}">${buttonText}</button>
+                                <button class="${buttonClass}" data-testid="${test.id}" data-isavailable="${isAvailable ? 'true' : 'false'}">${buttonText}</button>
                             </div>
                         </div>
                     `;
                 }).join('');
                 
-                // Add event listener delegation only once
-                // Remove previous listeners before adding a new one (important for filter changes)
+                // Re-attach event listener delegation
                 const newTestGrid = this.testGrid.cloneNode(true);
                 this.testGrid.parentNode.replaceChild(newTestGrid, this.testGrid);
                 this.testGrid = newTestGrid;
                 
                 this.testGrid.addEventListener('click', e => {
                     if (e.target.tagName === 'BUTTON' && e.target.dataset.testid) {
-                        const isFree = e.target.dataset.isfree === 'true';
-                        if (isFree) {
+                        const isAvailable = e.target.dataset.isavailable === 'true';
+                        if (isAvailable) {
                             this.startTest(e.target.dataset.testid, e.target);
                         } else {
                             // Locked test: Show the subscription modal
@@ -440,7 +420,7 @@
                 });
             }
 
-            // This function is only called if the test is free (isFree === true)
+            // This function is only called if the test is available (isAvailable === true)
             async startTest(testId, buttonElement) {
                 buttonElement.disabled = true;
                 buttonElement.textContent = 'Loading...';

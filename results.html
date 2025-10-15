@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detailed Results - ExamAce</title>
-    <!-- Add KaTeX CSS for LaTeX rendering (still needed for on-page review) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <style>
         /* Reset and base styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -135,15 +133,6 @@
         .btn-primary { background-color: var(--primary); color: white; border: 1px solid var(--primary); }
         .btn-outline { background-color: transparent; color: var(--primary); border: 1px solid var(--primary); }
         
-        /* New style for the PDF download button (now Print to PDF) */
-        #print-pdf-btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-        }
-
         @media (max-width: 992px) {
             .results-grid { grid-template-columns: 1fr; }
             .sidebar-card { position: static; }
@@ -152,47 +141,6 @@
             .summary-score { font-size: 3.5rem; }
             .summary-test-name { font-size: 1.5rem; }
         }
-
-        /* --- Print Styles for Clean PDF Output --- */
-        @media print {
-            body { background-color: white; }
-            .navbar, .summary-header, .download-message, #print-pdf-btn, .action-buttons, .sidebar, .question-filter {
-                display: none !important;
-            }
-            .main-container {
-                max-width: 100%;
-                padding: 0 !important;
-            }
-            .results-grid {
-                display: block !important;
-            }
-            .card {
-                border: none !important;
-                padding: 0 !important;
-                box-shadow: none !important;
-            }
-            .card-title {
-                display: block;
-                font-size: 1.5rem;
-                font-weight: 700;
-                margin-bottom: 1rem;
-                border-bottom: 2px solid #374151;
-                padding-bottom: 0.5rem;
-            }
-            .review-question {
-                border-bottom: 1px dashed #6b7280;
-                margin-bottom: 1.5rem;
-                padding-bottom: 1rem;
-                page-break-inside: avoid; /* Keep question and solution together */
-            }
-            .solution {
-                background-color: #f3f4f6;
-                border-left: 4px solid #9ca3af;
-            }
-            /* Ensure KaTeX renders without issues */
-            .katex { color: black !important; } 
-        }
-        /* --- End Print Styles --- */
     </style>
 </head>
 <body>
@@ -242,14 +190,10 @@
                     <div class="summary-stat"><div class="summary-stat-value" id="stat-accuracy">0%</div><div class="summary-stat-label">Accuracy</div></div>
                 </div>
             </section>
-            
-       
-            
-            <button id="print-pdf-btn" class="btn btn-primary" style="margin-bottom: 2rem;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-                Dowload PDF Solutions
-            </button>
 
+            <div class="download-message" style="text-align: center; margin-bottom: 2rem; color: var(--muted-foreground);">
+                <p>The solution is downloaded automatically into your device.</p>
+            </div>
 
             <div class="results-grid">
                 <div class="card" id="answer-review-card">
@@ -274,6 +218,7 @@
                             <div id="time-container"></div>
                         </div>
                         <div class="action-buttons">
+                        
                             <a href="test-selection.html" class="btn btn-outline">Take Another Test</a>
                         </div>
                     </div>
@@ -285,6 +230,7 @@
     <script type="module">
  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+// New imports for Firestore: getDoc, updateDoc, and arrayUnion are added
 import { getFirestore, doc, setDoc, serverTimestamp, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 // Your Firebase configuration
@@ -319,7 +265,7 @@ class DetailedResultsPage {
     constructor() {
         this.results = null;
         this.user = null;
-        this.katex = null;
+        this.solutionsDownloaded = false;
 
         if (auth) {
             onAuthStateChanged(auth, user => {
@@ -337,36 +283,6 @@ class DetailedResultsPage {
         }
 
         this.initializeEventListeners();
-        this.loadKatex();
-    }
-
-    async loadKatex() {
-        try {
-            const katexModule = await import('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.mjs');
-            this.katex = katexModule.default;
-        } catch (error) {
-            console.error('Failed to load KaTeX:', error);
-        }
-    }
-
-    /**
-     * Renders LaTeX using ** delimiters for on-page review via KaTeX.
-     */
-    renderLatex(text) {
-        if (!text || !this.katex) return text || '';
-        
-        // Replace **latex_content** with rendered KaTeX
-        return text.replace(/\*\*([^*]+)\*\*/g, (match, latex) => {
-            try {
-                return this.katex.renderToString(latex, {
-                    throwOnError: false,
-                    displayMode: false
-                });
-            } catch (e) {
-                console.error('LaTeX rendering error:', e);
-                return match;
-            }
-        });
     }
 
     initializeEventListeners() {
@@ -383,11 +299,6 @@ class DetailedResultsPage {
 
         document.getElementById('mobile-menu-btn').addEventListener('click', () => {
             document.getElementById('mobile-menu').classList.toggle('active');
-        });
-
-        // Attach the new print function to the button
-        document.getElementById('print-pdf-btn').addEventListener('click', () => {
-             this.printSolutions();
         });
     }
 
@@ -411,14 +322,10 @@ class DetailedResultsPage {
             // Save the summary data to Firestore
             await this.saveResultsSummaryToFirestore();
 
-            // Wait for KaTeX to load before rendering
-            if (!this.katex) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-
             // Render the page after saving
             this.renderPage();
-            // The automatic download is now a button press for the user.
+            this.downloadSolutions();
+
         } catch (error) {
             console.error('Error processing results:', error);
             document.getElementById('loading-state').innerHTML = '<h1>Error loading results data.</h1>';
@@ -427,15 +334,14 @@ class DetailedResultsPage {
     
     /**
      * Helper function to sanitize email for use as a Firestore Document ID.
+     * Replaces non-alphanumeric characters with underscores.
      */
     sanitizeEmail(email) {
         // Replace '.' and '@' and other non-alphanumeric chars with an underscore
         return email.replace(/[^a-zA-Z0-9]/g, '_');
     }
 
-    /**
-     * Saves the test results summary to Firestore under the user's email.
-     */
+    // --- REVISED saveResultsToFirestore function (FIXED serverTimestamp inside array) ---
     async saveResultsSummaryToFirestore() {
         if (!this.user || !this.results || !db) {
             console.error("User, results, or database not available. Cannot save.");
@@ -449,6 +355,7 @@ class DetailedResultsPage {
         // 1. Prepare the data for the single test attempt
         const testAttemptData = {
             testAttemptId: testAttemptId, 
+            // FIX: Use ISO string timestamp inside the array item to avoid Firestore error
             timestamp: new Date().toISOString(), 
             testId: this.results.testData.id,
             testName: this.results.testData.title,
@@ -508,13 +415,56 @@ class DetailedResultsPage {
             console.error("Error saving summary results to Firestore: ", e);
         }
     }
+    // --- END REVISED saveResultsToFirestore function ---
 
-    /**
-     * Triggers the browser's print dialog, allowing the user to select 'Save as PDF'.
-     */
-    printSolutions() {
-        if (!this.results) return;
-        window.print();
+    downloadSolutions() {
+        if (!this.results || this.solutionsDownloaded) return;
+        this.solutionsDownloaded = true;
+
+        let solutionText = `Solutions for: ${this.results.testData.title}\n`;
+        solutionText += "========================================\n\n";
+
+        this.results.testData.questions_data.forEach((q, index) => {
+            solutionText += `Q${index + 1}: ${q.questionText}\n`;
+            if (q.questionImageUrl) {
+                solutionText += `(Image URL: ${q.questionImageUrl})\n`;
+            }
+            
+            const isFillInTheBlanks = q.options.length === 1 && q.options[0] === 'nil';
+            
+            if (isFillInTheBlanks) {
+                solutionText += `\nCorrect Answer: ${q.correctAnswer}\n`;
+            } else {
+                q.options.forEach((option, optIndex) => {
+                    solutionText += `   ${String.fromCharCode(65 + optIndex)}. ${option}\n`;
+                });
+                const correctOptionLetter = String.fromCharCode(65 + q.correctAnswer);
+                const correctOptionText = q.options[q.correctAnswer];
+                solutionText += `\nCorrect Answer: ${correctOptionLetter}. ${correctOptionText}\n`;
+            }
+            
+            let formattedSolution = q.solution || 'No detailed solution available.';
+            formattedSolution = formattedSolution.replace(/<br>/g, '\n').replace(/Solution: /g, '');
+            const steps = formattedSolution.split('\n').map(s => s.trim()).filter(s => s);
+            
+            solutionText += `Solution:\n`;
+            steps.forEach(step => {
+                solutionText += `- ${step}\n`;
+            });
+
+            solutionText += "----------------------------------------\n\n";
+        });
+
+        const blob = new Blob([solutionText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const fileName = `${this.results.testData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_solutions.txt`;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     renderPage() {
@@ -588,10 +538,8 @@ class DetailedResultsPage {
             let isCorrect = false;
             if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
                  if (isFillInTheBlanks) {
-                    // Assuming q.correctAnswer for fill-in is a string number
                     isCorrect = parseFloat(userAnswer) === parseFloat(q.correctAnswer);
                 } else {
-                    // For MCQ, q.correctAnswer is the index
                     isCorrect = userAnswer === q.correctAnswer;
                 }
             }
@@ -609,31 +557,22 @@ class DetailedResultsPage {
                     </div>
                 `;
             } else {
-                optionsHtml = q.options.map((option, optIndex) => {
-                    // Render option text with KaTeX/LaTeX support
-                    const renderedOption = this.renderLatex(option);
-                    return `
+                optionsHtml = q.options.map((option, optIndex) => `
                     <div class="option 
                         ${optIndex === q.correctAnswer ? 'correct-answer' : ''}
                         ${optIndex === userAnswer && !isCorrect ? 'incorrect-choice' : ''}
                     ">
                         <span class="option-label">${String.fromCharCode(65 + optIndex)}.</span>
-                        <span>${renderedOption}</span>
+                        <span>${option}</span>
                     </div>
-                    `;
-                }).join('');
+                `).join('');
             }
 
             let solutionHtml = '';
             let formattedSolution = q.solution || 'No detailed solution available.';
-            // Render solution text with KaTeX/LaTeX support
-            formattedSolution = this.renderLatex(formattedSolution);
-            
-            // Convert HTML breaks for list formatting
             const steps = formattedSolution.replace(/Solution: /g, '').split(/<br\s*\/?>/i);
             
             if (steps.length > 1) {
-                // Heuristically assume the last line is a conclusion/final answer if steps exist
                 const conclusion = steps.pop();
                 solutionHtml = `<ol>${steps.map(step => `<li>${step.trim()}</li>`).join('')}</ol><p class="conclusion">${conclusion.trim()}</p>`;
             } else {
@@ -644,21 +583,20 @@ class DetailedResultsPage {
                 ? `<img src="${q.questionImageUrl}" alt="Question Image" class="review-image" onerror="this.style.display='none'">` 
                 : '';
 
-            // Render question text with KaTeX/LaTeX support
-            const renderedQuestion = this.renderLatex(q.questionText);
-
             container.innerHTML += `
                 <div class="review-question" data-status="${status}">
                     <div class="review-question-header">
-                        <span>Q${index + 1}</span>
-                        <span class="review-question-topic">${q.topic || 'General'}</span>
-                        <span class="status-tag status-${status}">
-                            ${status === 'correct' ? 'Correct' : status === 'incorrect' ? 'Incorrect' : 'Unanswered'}
-                        </span>
+                        <span><b>Q${index + 1}:</b> (${q.subject})</span>
+                        <div>
+                            <span class="review-question-topic">${q.topic || 'General'}</span>
+                            <span class="status-tag status-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                        </div>
                     </div>
-                    <div class="review-question-text">${renderedQuestion}</div>
+                    <p>${q.questionText}</p>
                     ${questionImageHtml}
-                    <div class="review-options">${optionsHtml}</div>
+                    <div class="review-options">
+                        ${optionsHtml}
+                    </div>
                     <div class="solution">
                         <h4>Solution:</h4>
                         ${solutionHtml}
@@ -667,23 +605,20 @@ class DetailedResultsPage {
             `;
         });
     }
-
+    
     setupFilters() {
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.renderAnswerReview(btn.dataset.filter);
-            });
+        const filterContainer = document.getElementById('question-filter');
+        filterContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                filterContainer.querySelector('.active').classList.remove('active');
+                e.target.classList.add('active');
+                   this.renderAnswerReview(e.target.dataset.filter);
+            }
         });
     }
 }
 
-// Initialize the detailed results page when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new DetailedResultsPage();
-});
-    </script>
+new DetailedResultsPage();
+</script>
 </body>
 </html>
