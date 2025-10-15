@@ -244,13 +244,12 @@
             </section>
             
             <div class="download-message" style="text-align: center; margin-bottom: 2rem; color: var(--muted-foreground);">
-                <p>The **PDF solutions will open automatically in your browser's print dialog** now. Please select **"Save as PDF"** to complete the download. </p>
-                <p style="margin-top: 0.5rem;">If the dialog is closed, use the button below to retry.</p>
+                <p>Click the button below to open the print dialog and generate a PDF with fully rendered equations.</p>
             </div>
             
             <button id="print-pdf-btn" class="btn btn-primary" style="margin-bottom: 2rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-                Retry PDF Print/Download
+                Generate PDF Solutions (Rendered)
             </button>
 
 
@@ -388,7 +387,7 @@ class DetailedResultsPage {
             document.getElementById('mobile-menu').classList.toggle('active');
         });
 
-        // Attach the manual retry function to the button
+        // Attach the new print function to the button
         document.getElementById('print-pdf-btn').addEventListener('click', () => {
              this.printSolutions();
         });
@@ -421,11 +420,7 @@ class DetailedResultsPage {
 
             // Render the page after saving
             this.renderPage();
-            
-            // --- AUTOMATIC PDF GENERATION TRIGGERED HERE ---
-            this.printSolutions(); 
-            // --- END AUTOMATIC TRIGGER ---
-            
+            // The automatic download is now a button press for the user.
         } catch (error) {
             console.error('Error processing results:', error);
             document.getElementById('loading-state').innerHTML = '<h1>Error loading results data.</h1>';
