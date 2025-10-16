@@ -19,7 +19,9 @@
         .test-container { display: flex; height: 100vh; padding-top: 60px; }
         .test-header { position: fixed; top: 0; left: 0; right: 0; background-color: var(--card); border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; justify-content: space-between; align-items: center; z-index: 100; height: 60px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .question-nav { width: 300px; background-color: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; flex-shrink: 0; transition: transform 0.3s ease-in-out; }
-        .question-content { flex: 1; padding: 1.5rem 2rem; overflow-y: auto; height: 100%; }
+        
+        /* UPDATED: Adjust padding-bottom to account for fixed controls */
+        .question-content { flex: 1; padding: 1.5rem 2rem; overflow-y: auto; height: 100%; padding-bottom: 75px; } 
 
         /* Header */
         .test-title { font-size: 1.25rem; font-weight: 600; }
@@ -60,7 +62,7 @@
         
         .question-text { font-size: 1.125rem; margin-bottom: 1rem; }
         
-        /* New Image Styling */
+        /* Image Styling */
         .question-image {
             max-width: 100%;
             height: auto;
@@ -97,8 +99,27 @@
             outline: none;
             border-color: var(--primary);
         }
-
-        .question-controls { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+        
+        /* CRITICAL FIX: Make question controls fixed at the bottom */
+        .question-controls { 
+            /* Overriding old scrollable placement styles */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--card); /* Ensures buttons are visible over content */
+            border-top: 1px solid var(--border);
+            padding: 0.75rem 2rem;
+            z-index: 90;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+            
+            /* Original flex properties */
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            gap: 1rem;
+        }
+        
         .control-group { display: flex; gap: 0.75rem; }
         .btn { padding: 0.75rem 1.5rem; border: 1px solid var(--border); border-radius: 0.375rem; font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.875rem; display: inline-flex; align-items: center; gap: 0.5rem; }
         .btn-outline { background: none; }
@@ -161,10 +182,35 @@
             .question-nav.open { transform: translateX(0); }
             .nav-toggle-close { display: block; }
             .mobile-nav-toggle { display: none; background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 0.25rem; }
-            .question-content { padding: 1.5rem 1rem; }
-            .question-controls { flex-direction: column; gap: 1rem; }
-            .control-group { width: 100%; } .control-group .btn { flex: 1; justify-content: center; }
+            .question-content { 
+                padding: 1.5rem 1rem; 
+                /* CRITICAL FIX: Increase padding for mobile where buttons stack vertically (approx 2 rows high) */
+                padding-bottom: 160px; 
+            }
             .test-header { padding: 0.5rem 1rem; } .test-title { font-size: 1rem; }
+            
+            .question-controls { 
+                flex-direction: column; 
+                gap: 0.75rem; 
+                padding: 0.75rem 1rem; /* Adjust padding on mobile */
+            }
+            /* Ensure the two-button group takes full width and justifies space */
+            .control-group:first-child { 
+                width: 100%; 
+                justify-content: space-between; 
+            }
+            .control-group:first-child .btn { flex: 1; justify-content: center; }
+            
+            /* CRITICAL FIX: Use grid for the three-button group to prevent splitting */
+            .control-group:last-child {
+                width: 100%;
+                display: grid; 
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 0.5rem;
+            }
+            .control-group:last-child .btn {
+                flex: unset; /* Override flex: 1 from other rules */
+            }
         }
         @media (max-width: 480px) {
             .mobile-nav-toggle { display: block; }
@@ -216,17 +262,8 @@
                 </div>
                 
                 <div class="options-container" id="options-container"></div>
-                <div class="question-controls">
-                    <div class="control-group">
-                        <button class="btn btn-outline" id="prev-btn">← Previous</button>
-                        <button class="btn btn-outline" id="clear-btn">Clear Response</button>
-                    </div>
-                    <div class="control-group">
-                        <button class="btn btn-warning" id="mark-review-btn">🔖 Mark for Review</button>
-                        <button class="btn btn-primary" id="mark-next-btn">Mark & Next →</button>
-                        <button class="btn btn-secondary" id="save-next-btn">Save & Next →</button>
-                    </div>
-                </div>
+                
+                <!-- NOTE: The question controls were moved out of this scrollable main area to be fixed at the bottom -->
             </div>
         </main>
     </div>
@@ -248,6 +285,20 @@
             <button id="close-image-btn">×</button>
         </div>
     </div>
+
+    <!-- MOVED AND REPOSITIONED QUESTION CONTROLS (FIXED FOOTER) -->
+    <div class="question-controls">
+        <div class="control-group">
+            <button class="btn btn-outline" id="prev-btn">← Previous</button>
+            <button class="btn btn-outline" id="clear-btn">Clear Response</button>
+        </div>
+        <div class="control-group">
+            <button class="btn btn-warning" id="mark-review-btn">🔖 Mark for Review</button>
+            <button class="btn btn-primary" id="mark-next-btn">Mark & Next →</button>
+            <button class="btn btn-secondary" id="save-next-btn">Save & Next →</button>
+        </div>
+    </div>
+    <!-- END FIXED FOOTER -->
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
