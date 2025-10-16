@@ -112,15 +112,23 @@
         
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            /* FIX: Ensure buttons remain in a row and are smaller on mobile */
             .nav-actions {
-                flex-direction: column;
+                /* Change flex-direction from column (if previously set) back to row for small screens */
+                flex-direction: row; 
                 gap: 0.5rem;
+                /* Ensure there's space for the buttons */
+                min-width: 150px; 
             }
             .nav-actions a {
-                width: 100%;
-                font-size: 0.875rem;
-                padding: 0.5rem 0.75rem;
+                width: auto; /* Allow buttons to size naturally based on padding and content */
+                font-size: 0.8rem; /* Slightly smaller text */
+                padding: 0.4rem 0.6rem; /* Reduced padding */
+                /* Allow buttons to take equal space if needed, but 'auto' is generally better for text */
+                flex-grow: 1; 
             }
+            /* End FIX */
+            
             .module-card {
                 flex-direction: column;
                 align-items: center;
