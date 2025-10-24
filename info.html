@@ -4,601 +4,505 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Exam Information - ExamAce</title>
-    <!-- Load Tailwind CSS CDN for modern styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Base and Custom Variables */
+        /* Reset and base styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #374151; background-color: #f9fafb; min-height: 100vh; }
         :root {
-            /* Primary Green */
-            --primary: #15803d; 
-            --primary-foreground: #ffffff; 
-            /* Secondary Green (Lighter) */
-            --secondary: #84cc16;
-            --card: #ffffff; 
-            --muted: #f3f4f6; 
-            --muted-foreground: #6b7280;
-            --border: #e5e7eb; 
-            --foreground: #374151;
-            --subtle-bg: #ecfdf5; /* Very light mint background */
-        }
-        
-        /* Apply the theme variables globally via Tailwind configuration */
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-green': '#15803d',
-                        'subtle-green-bg': '#ecfdf5',
-                    }
-                }
-            }
+            --primary: #15803d; --primary-foreground: #ffffff; --secondary: #84cc16;
+            --card: #ffffff; --muted: #f3f4f6; --muted-foreground: #6b7280;
+            --border: #e5e7eb; --foreground: #374151;
         }
 
+        /* Navigation styles (Tailwind-like custom CSS) */
+        .navbar { background-color: var(--card); border-bottom: 1px solid var(--border); padding: 0 1rem; position: sticky; top: 0; z-index: 100; }
+        .nav-container { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; height: 4rem; }
+        .nav-brand { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-link { color: var(--foreground); text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .nav-link:hover, .nav-link.active { color: var(--primary); }
+        .nav-user { display: flex; align-items: center; gap: 1rem; }
+        .user-avatar { width: 2.5rem; height: 2.5rem; background-color: var(--primary); color: var(--primary-foreground); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .logout-btn { background: none; border: 1px solid var(--border); color: var(--foreground); padding: 0.5rem 1rem; border-radius: 0.375rem; cursor: pointer; transition: all 0.2s; font-weight: 500;}
+        .logout-btn:hover { background-color: var(--muted); border-color: var(--primary); }
 
-        /* --- Unified Navigation styles --- */
-        .navbar { 
-            background-color: var(--card); 
-            border-bottom: 1px solid var(--border); 
-            padding: 0 1rem; 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
-        }
-        .nav-container { 
-            max-width: 1400px; 
-            margin: 0 auto; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            height: 4rem; 
-        }
-        .nav-brand { 
-            font-size: 1.5rem; 
-            font-weight: 700; 
-            color: var(--primary); 
-            text-decoration: none; 
-        }
+        /* Mobile menu */
+        .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.75rem; cursor: pointer; color: var(--foreground); }
+        .mobile-menu { display: none; background-color: var(--card); border-top: 1px solid var(--border); padding: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .mobile-menu.active { display: block; }
+        .mobile-nav-links { list-style: none; display: flex; flex-direction: column; gap: 1rem; }
+        .mobile-nav-links .nav-link { display: block; padding: 0.5rem 0; }
         
-        /* Desktop Links */
-        .nav-links { 
-            display: flex; 
-            gap: 2rem; 
-            list-style: none; 
-        }
-        .nav-link { 
-            color: var(--foreground); 
-            text-decoration: none; 
-            font-weight: 500; 
-            transition: all 0.2s; 
-            padding: 0 0.2rem;
-            line-height: 2;
-        }
-        /* Active/Hover underline for desktop */
-        .nav-link:hover, .nav-link.active { 
-            color: var(--primary); 
-            border-bottom: 3px solid var(--primary); 
-        }
+        /* Main Content */
+        .main-container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+        .page-header { text-align: center; margin-bottom: 2.5rem; }
+        .page-title { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+        .page-subtitle { font-size: 1.15rem; color: var(--muted-foreground); margin-top: 0.5rem; }
         
-        /* User/Logout container */
-        .nav-user { 
-            display: flex; 
-            align-items: center; 
-            gap: 1rem; 
-        }
-        .user-avatar { 
-            width: 2rem; 
-            height: 2rem; 
-            background-color: var(--primary); 
-            color: var(--primary-foreground); 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: 600; 
-        }
-        /* Styling the Logout anchor tag as a button */
-        #logout-btn {
-            border: 1px solid var(--border);
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
-            transition: all 0.2s;
+        /* Tabs styles */
+        .tab-nav { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2.5rem; }
+        .tab-btn {
+            padding: 0.75rem 2rem;
+            border: 2px solid var(--border);
+            background: var(--card);
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
-            text-decoration: none;
-            color: var(--foreground);
-            background: none;
+            color: var(--muted-foreground);
+            border-radius: 999px;
+            transition: all 0.3s ease;
         }
-        #logout-btn:hover { 
+        .tab-btn:hover:not(.active) {
             background-color: var(--muted);
-            border-bottom: none; /* remove hover line when styled as button */
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .tab-btn.active { 
+            color: var(--primary-foreground); 
+            background-color: var(--primary); 
+            border-color: var(--primary); 
+            box-shadow: 0 4px 6px rgba(21, 128, 61, 0.3);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .updates-section { margin-bottom: 2rem; }
+        .section-title { font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 1.5rem; border-bottom: 3px solid var(--primary); display: inline-block; padding-bottom: 0.5rem; }
+
+        .exam-updates-container, .exam-info-container { display: flex; flex-direction: column; gap: 2rem; }
+        .exam-card { background-color: var(--card); border: 1px solid var(--border); border-radius: 1rem; padding: 2rem; box-shadow: 0 10px 15px rgba(0,0,0,0.05); }
+        .exam-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .exam-card-title { font-size: 1.6rem; font-weight: 700; color: var(--foreground); }
+        .exam-card-tag { 
+            background-color: var(--secondary); 
+            color: var(--primary-foreground); 
+            padding: 0.35rem 1rem; 
+            border-radius: 999px; 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            text-transform: uppercase;
         }
 
-        /* Mobile menu toggle */
-        .mobile-menu-btn { 
-            display: none; 
-            background: none; 
-            border: none; 
-            font-size: 1.75rem; 
-            cursor: pointer; 
-            color: var(--foreground); 
-            padding: 0.5rem;
-        }
-        .mobile-menu { 
-            display: none; 
-            background-color: var(--card); 
-            border-top: 1px solid var(--border); 
-            padding: 1rem; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        }
-        .mobile-menu.active { 
-            display: block; 
-        }
-        .mobile-nav-links { 
-            list-style: none; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 1rem; 
-        }
-        .mobile-nav-links .nav-link { 
-            display: block; 
-            padding: 0.5rem 0; 
-            border-bottom: none; /* Remove desktop style underline */
-        }
-        .mobile-nav-links .nav-link.active { 
-            color: var(--primary); 
-            font-weight: 700; 
-        }
+        .update-list { list-style: none; padding: 0; }
+        .update-item { display: flex; align-items: flex-start; gap: 1.5rem; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+        .update-item:last-child { border-bottom: none; }
+        .update-date { font-weight: 700; color: var(--primary); min-width: 120px; font-size: 1rem; }
+        .update-details { flex-grow: 1; }
+        .update-text { margin-bottom: 0.25rem; font-weight: 600; color: var(--foreground); }
+        .update-info { font-size: 0.9rem; color: var(--muted-foreground); }
         
-        /* Responsive Breakpoints */
-        @media (max-width: 992px) {
-            /* Hide desktop links and user info in tablet/mobile */
-            .nav-links, .nav-user { display: none; } 
-            /* Show mobile menu button */
+        .important-note {
+            background-color: #fff7ed; /* Soft orange background */
+            color: #c2410c; /* Dark orange text */
+            border-left: 5px solid #f97316; /* Bright orange border */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            font-weight: 500;
+        }
+        .important-note strong { color: #9a3412; font-weight: 700; }
+
+        .info-table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+        .info-table th, .info-table td { text-align: left; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+        .info-table th { font-weight: 700; color: var(--foreground); width: 30%; }
+        .info-table td ul { padding-left: 1.25rem; list-style: disc; }
+        .info-table td ul li { margin-bottom: 0.25rem; }
+        
+        /* New section style for official links */
+        .official-links-section {
+            padding: 2rem;
+            background-color: var(--muted);
+            border-radius: 1rem;
+            margin-top: 3rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .official-links-section .section-title {
+            border-bottom-color: #374151; /* Darker border for contrast */
+            color: var(--foreground);
+        }
+        .official-links-section ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .official-links-section ul li a {
+            display: block;
+            background-color: var(--card);
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .official-links-section ul li a:hover {
+            background-color: #d1fae5; /* Light green hover */
+            border-color: var(--primary);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-user { display: none; }
             .mobile-menu-btn { display: block; }
             .update-item { flex-direction: column; gap: 0.5rem; }
-            .update-date { width: 100%; text-align: left; }
+            .update-date { min-width: auto; }
+            .page-title { font-size: 2rem; }
+            .tab-btn { padding: 0.6rem 1.25rem; font-size: 1rem; }
         }
-        @media (min-width: 993px) {
-             /* Ensure desktop elements are shown above breakpoint */
-            .nav-links, .nav-user { display: flex; }
-            .mobile-menu-btn, .mobile-menu { display: none; }
-        }
-        /* --- END Unified Navigation styles --- */
-        
-        /* --- SLIDE BAR TAB STYLES (REFINED) --- */
-        .tab-nav-container {
-            /* Light green background for the tab bar container */
-            @apply bg-subtle-green-bg p-2 rounded-xl shadow-inner max-w-lg mx-auto; 
-        }
-
-        .tab-nav {
-            @apply flex w-full space-x-2;
-        }
-
-        .tab-nav button {
-            /* Ensures smooth transition for the "sliding" effect */
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            @apply px-4 sm:px-6 py-2 w-full rounded-lg font-bold text-sm sm:text-base;
-        }
-        
-        .tab-nav button.active {
-            background-color: var(--primary);
-            color: var(--primary-foreground);
-            /* Stronger shadow for the active element */
-            box-shadow: 0 4px 10px rgba(21, 128, 61, 0.3); 
-        }
-        
-        .tab-nav button:not(.active) {
-            @apply text-gray-600 bg-transparent hover:text-primary-green/80;
-        }
-        /* --- END SLIDE BAR TAB STYLES --- */
-
-        .exam-card {
-            /* Standard clean white card with subtle shadow and border */
-            @apply bg-white rounded-xl p-6 shadow-lg border border-gray-200;
-        }
-        
-        .official-links-block {
-            /* Distinct card for official links */
-            @apply bg-subtle-green-bg rounded-xl p-6 shadow-md border border-primary-green/30 mt-8;
-        }
-        .update-date {
-            /* Styling for the date element */
-            @apply font-extrabold text-primary-green w-24 flex-shrink-0;
-        }
-
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- NAV BAR -->
+<body>
     <nav class="navbar">
         <div class="nav-container">
             <a href="dashboard.html" class="nav-brand">ExamAce</a>
-            <!-- Desktop Links (New Order) -->
             <ul class="nav-links">
                 <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
                 <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
                 <li><a href="resources.html" class="nav-link">Resources</a></li>
-                <li><a href="tips.html" class="nav-link">Formulas & Revision</a></li>
-                <li><a href="info.html" class="nav-link active">Exam Info</a></li>
+                <li><a href="tips.html" class="nav-link">Tips & Revision</a></li>
+                <li><a href="exam-info.html" class="nav-link active">Exam Info</a></li>
             </ul>
-            <!-- Desktop User/Logout -->
             <div class="nav-user">
                 <div class="user-avatar" id="user-avatar">U</div>
-                <a href="#" id="logout-btn" class="nav-link">Logout</a>
+                <button class="logout-btn" id="logout-btn">Logout</button>
             </div>
-            <!-- Mobile Menu Toggle -->
             <button class="mobile-menu-btn" id="mobile-menu-btn">&#9776;</button>
         </div>
-        <!-- Mobile Menu (New Order) -->
         <div class="mobile-menu" id="mobile-menu">
             <ul class="mobile-nav-links">
                 <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
                 <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
                 <li><a href="resources.html" class="nav-link">Resources</a></li>
-                <li><a href="tips.html" class="nav-link">Formulas & Revision</a></li>
-                <li><a href="info.html" class="nav-link active">Exam Info</a></li>
+                <li><a href="tips.html" class="nav-link">Tips & Revision</a></li>
+                <li><a href="exam-info.html" class="nav-link active">Exam Info</a></li>
                 <li><a href="#" id="mobile-logout-btn" class="nav-link">Logout</a></li>
             </ul>
         </div>
     </nav>
-    <!-- END NAV BAR -->
 
-    <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-extrabold text-primary-green tracking-tight sm:text-5xl">Exam Information Hub</h1>
-            <p class="mt-3 text-lg text-gray-500 max-w-2xl mx-auto">Latest tentative schedules, updates, and key details for major entrance exams like **JEE Main, NEET, and KCET 2026**.</p>
+    <main class="main-container">
+        <header class="page-header">
+            <h1 class="page-title">Exam Information Hub</h1>
+            <p class="page-subtitle">Stay up-to-date with the latest announcements, important dates, and deadlines for major entrance exams.</p>
         </header>
         
-        <!-- Reworked Slide-Bar Tab Navigation -->
-        <nav class="tab-nav-container flex justify-center mb-10">
-            <div class="tab-nav">
-                <button class="tab-btn active" data-tab="updates-section">Latest Updates</button>
-                <button class="tab-btn" data-tab="info-section">Exam Pattern</button>
-            </div>
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="updates-section">Updates</button>
+            <button class="tab-btn" data-tab="info-section">Exam Info</button>
         </nav>
 
-        <!-- Updates Section (Tab 1) -->
-        <section id="updates-section" class="tab-content active space-y-8">
-            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Tentative 2026 Exam Schedules</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-
-                <!-- JEE Main Card -->
+        <section id="updates-section" class="tab-content active">
+            <h2 class="section-title">Latest Official Announcements </h2>
+            <div class="exam-updates-container">
                 <div class="exam-card">
-                    <div class="flex justify-between items-center mb-4 border-b pb-2 border-gray-100">
-                        <h3 class="text-xl font-bold text-gray-800">JEE Main 2026</h3>
-                        <span class="px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full">Engineering</span>
+                    <div class="exam-card-header">
+                        <h3 class="exam-card-title">JEE (Main & Advanced) 2026</h3>
+                        <span class="exam-card-tag">Engineering</span>
                     </div>
-                    <ul class="space-y-5">
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">Oct 2025</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Registration Start (Session 1)</p>
-                                <p class="text-sm text-gray-500">Online application window opens soon.</p>
+                    <ul class="update-list">
+                        <li class="update-item">
+                            <span class="update-date">October 2025 onwards</span>
+                            <div class="update-details">
+                                <p class="update-text">JEE Main 2026 Session 1 registration begins.</p>
+                                <p class="update-info">Candidates must ensure Aadhaar details match to simplify the new registration process. Last date expected in late Nov/early Dec 2025.</p>
                             </div>
                         </li>
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">Jan 2026</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Exam Dates (Session 1)</p>
-                                <p class="text-sm text-gray-500">Tentative dates: Jan 22 to 30, 2026.</p>
+                        <li class="update-item">
+                            <span class="update-date">January 21 - 30, 2026</span>
+                            <div class="update-details">
+                                <p class="update-text">JEE Main 2026 Session 1 exam dates.</p>
+                                <p class="update-info">The exam will be conducted by NTA in Computer-Based Test (CBT) mode across multiple shifts over the duration.</p>
                             </div>
                         </li>
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">Apr 2026</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Exam Dates (Session 2)</p>
-                                <p class="text-sm text-gray-500">Tentative dates: April 2 to 9, 2026.</p>
+                        <li class="update-item">
+                            <span class="update-date">Last week of Jan 2026 onwards</span>
+                            <div class="update-details">
+                                <p class="update-text">JEE Main 2026 Session 2 registration opens.</p>
+                                <p class="update-info">Registration window reopens for candidates to apply only for the April session or both sessions.</p>
+                            </div>
+                        </li>
+                         <li class="update-item">
+                            <span class="update-date">April 1 - 10, 2026</span>
+                            <div class="update-details">
+                                <p class="update-text">JEE Main 2026 Session 2 exam dates.</p>
+                                <p class="update-info">The second session provides candidates another opportunity to improve their scores (Best of two scores considered).</p>
+                            </div>
+                        </li>
+                        <li class="update-item">
+                            <span class="update-date">May 2026 (Tentative)</span>
+                            <div class="update-details">
+                                <p class="update-text">JEE Advanced 2026 exam date (expected).</p>
+                                <p class="update-info">The official date will be announced by the conducting IIT, typically held on a Sunday in mid to late May.</p>
+                            </div>
+                        </li>
+                         <li class="update-item">
+                            <span class="update-date">April 2026 (Tentative)</span>
+                            <div class="update-details">
+                                <p class="update-text">Registration window for JEE Advanced 2026.</p>
+                                <p class="update-info">Only the top 2,50,000 JEE Main qualifiers are eligible to apply for Advanced.</p>
                             </div>
                         </li>
                     </ul>
                 </div>
 
-                <!-- NEET UG Card -->
                 <div class="exam-card">
-                    <div class="flex justify-between items-center mb-4 border-b pb-2 border-gray-100">
-                        <h3 class="text-xl font-bold text-gray-800">NEET (UG) 2026</h3>
-                        <span class="px-3 py-1 text-xs font-semibold text-white bg-red-600 rounded-full">Medical</span>
+                    <div class="exam-card-header">
+                        <h3 class="exam-card-title">NEET (UG) 2026</h3>
+                        <span class="exam-card-tag">Medical</span>
                     </div>
-                    <ul class="space-y-5">
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">Feb 2026</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Registration Start</p>
-                                <p class="text-sm text-gray-500">Application form expected to be released by NTA.</p>
+                    <ul class="update-list">
+                        <li class="update-item">
+                            <span class="update-date">May 2026 (Expected)</span>
+                            <div class="update-details">
+                                <p class="update-text">NEET UG 2026 exam date.</p>
+                                <p class="update-info">Traditionally held on the first Sunday of May. Official confirmation is pending.</p>
                             </div>
                         </li>
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">May 3, 2026</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Tentative Exam Date</p>
-                                <p class="text-sm text-gray-500">Expected on the first Sunday of May (Offline mode).</p>
+                        <li class="update-item">
+                            <span class="update-date">February 2026 (Expected)</span>
+                            <div class="update-details">
+                                <p class="update-text">NEET UG 2026 registration window opens.</p>
+                                <p class="update-info">The application forms are usually available for four to five weeks on the official NTA NEET website.</p>
                             </div>
                         </li>
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">Jun 2026</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Result Declaration</p>
-                                <p class="text-sm text-gray-500">Expected release date for the final scorecard.</p>
+                         <li class="update-item">
+                            <span class="update-date">TBA (Post-Result)</span>
+                            <div class="update-details">
+                                <p class="update-text">All India Quota (AIQ) Counselling begins.</p>
+                                <p class="update-info">Conducted by MCC for 15% of seats in Government Colleges and all Deemed/Central Universities.</p>
                             </div>
                         </li>
                     </ul>
                 </div>
 
-                <!-- KCET Card -->
                 <div class="exam-card">
-                    <div class="flex justify-between items-center mb-4 border-b pb-2 border-gray-100">
-                        <h3 class="text-xl font-bold text-gray-800">KCET 2026</h3>
-                        <span class="px-3 py-1 text-xs font-semibold text-white bg-purple-600 rounded-full">State-Level</span>
+                    <div class="exam-card-header">
+                        <h3 class="exam-card-title">KCET 2026</h3>
+                        <span class="exam-card-tag">State-Level</span>
                     </div>
-                    <ul class="space-y-5">
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">Jan 2026</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Registration Start</p>
-                                <p class="text-sm text-gray-500">KEA is expected to open the online application window.</p>
+                    <ul class="update-list">
+                         <li class="update-item">
+                            <span class="update-date">April 2026 (Expected)</span>
+                            <div class="update-details">
+                                <p class="update-text">KCET 2026 exam dates.</p>
+                                <p class="update-info">The Karnataka Common Entrance Test is typically held over two days for PCMB subjects in mid-April.</p>
                             </div>
                         </li>
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">Apr 2026</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Tentative Exam Dates</p>
-                                <p class="text-sm text-gray-500">Expected for the subject papers (Apr 16 & 17).</p>
+                        <li class="update-item">
+                            <span class="update-date">January - February 2026 (Expected)</span>
+                            <div class="update-details">
+                                <p class="update-text">KCET 2026 registration window.</p>
+                                <p class="update-info">The online application process will start after the official notification is released by KEA.</p>
                             </div>
                         </li>
-                        <li class="flex items-start space-x-3 update-item">
-                            <span class="update-date w-24">No Neg.</span>
-                            <div class="flex-1 update-details">
-                                <p class="text-gray-800 font-medium">Key Rule</p>
-                                <p class="text-sm text-gray-500">There is **no negative marking** in the KCET examination.</p>
+                        <li class="update-item">
+                            <span class="update-date">May 2026 (Expected)</span>
+                            <div class="update-details">
+                                <p class="update-text">KCET 2026 result announcement.</p>
+                                <p class="update-info">The results are generally announced in May, followed by document verification and counselling rounds.</p>
                             </div>
                         </li>
                     </ul>
+                </div>
+            </div>
+            <div class="important-note">
+                <p><strong>🚨 Key JEE Main 2026 Update:</strong> The NTA has streamlined the B.E./B.Tech (Paper 1) pattern. The new design consists of 75 mandatory questions (25 questions each for Physics, Chemistry, and Mathematics) with NO internal choice for the Numerical Value Questions (NVQs).</p>
+            </div>
+        </section>
+
+        <section id="info-section" class="tab-content">
+            <h2 class="section-title">Exam Details and Structure</h2>
+            <div class="exam-info-container">
+                <div class="exam-card">
+                    <div class="exam-card-header">
+                        <h3 class="exam-card-title">JEE (Main) Exam (Latest Pattern)</h3>
+                        <span class="exam-card-tag">Details</span>
+                    </div>
+                    <table class="info-table">
+                        <tr>
+                            <th>Purpose</th>
+                            <td>Admission to undergraduate engineering programs at NITs, IIITs, other centrally funded technical institutions, and state-level colleges. It is also a qualifying exam for JEE Advanced.</td>
+                        </tr>
+                        <tr>
+                            <th>Exam Mode</th>
+                            <td>Computer-based Test (CBT), except for the Drawing section in Paper 2A (B.Arch) which is offline (Pen-and-Paper).</td>
+                        </tr>
+                        <tr>
+                            <th>Exam Duration</th>
+                            <td>3 hours (180 minutes) for all papers (Paper 1, Paper 2A, Paper 2B).</td>
+                        </tr>
+                        <tr>
+                            <th>Marking Scheme</th>
+                            <td>
+                                <ul>
+                                    <li>MCQs (Section A): +4 for each correct answer, -1 for each incorrect answer.</li>
+                                    <li>Numerical Value Questions (NVQs) (Section B): +4 for each correct answer. **Note: Official guidelines for 2026 indicate a negative marking of -1 for incorrect answers in NVQs as well. Check official bulletin.**</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Subjects & Questions (Paper 1 - B.E./B.Tech)</th>
+                            <td>
+                                <ul>
+                                    <li>**Total Questions:** 75 (25 questions each from Physics, Chemistry, and Mathematics).</li>
+                                    <li>**Structure (Per Subject):** 20 MCQs (Multiple Choice) and 5 NVQs (Numerical Value Questions).</li>
+                                    <li>**Attempt:** All 75 questions are mandatory (No choice in Section B).</li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="exam-card">
+                    <div class="exam-card-header">
+                        <h3 class="exam-card-title">NEET (UG) Exam</h3>
+                        <span class="exam-card-tag">Details</span>
+                    </div>
+                    <table class="info-table">
+                        <tr>
+                            <th>Purpose</th>
+                            <td>Admission to undergraduate medical (MBBS), dental (BDS), and AYUSH (BAMS, BUMS, BHMS, etc.) courses in India.</td>
+                        </tr>
+                        <tr>
+                            <th>Exam Mode</th>
+                            <td>Offline (Pen-and-paper mode).</td>
+                        </tr>
+                        <tr>
+                            <th>Exam Duration</th>
+                            <td>3 hours 20 minutes (200 minutes).</td>
+                        </tr>
+                        <tr>
+                            <th>Marking Scheme</th>
+                            <td>
+                                <ul>
+                                    <li>+4 for each correct answer.</li>
+                                    <li>-1 for each incorrect answer.</li>
+                                    <li>0 for unattempted questions.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Subjects & Questions</th>
+                            <td>200 questions total, out of which 180 must be attempted. Divided into Physics, Chemistry, and Biology (Botany & Zoology). Each subject has Section A (35 compulsory Qs) and Section B (15 Qs, attempt any 10).</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="exam-card">
+                    <div class="exam-card-header">
+                        <h3 class="exam-card-title">KCET Exam</h3>
+                        <span class="exam-card-tag">Details</span>
+                    </div>
+                    <table class="info-table">
+                        <tr>
+                            <th>Purpose</th>
+                            <td>Admission to undergraduate courses in Engineering, Technology, B. Pharma, B. Arch, and other professional programs in colleges across Karnataka.</td>
+                        </tr>
+                        <tr>
+                            <th>Exam Mode</th>
+                            <td>Offline (Pen-and-paper mode).</td>
+                        </tr>
+                        <tr>
+                            <th>Exam Duration</th>
+                            <td>80 minutes for each subject paper (Physics, Chemistry, Mathematics/Biology).</td>
+                        </tr>
+                        <tr>
+                            <th>Marking Scheme</th>
+                            <td>
+                                <ul>
+                                    <li>+1 for each correct answer.</li>
+                                    <li>There is **no negative marking** for incorrect answers.</li>
+                                    <li>No marks will be awarded for multiple answers to a single question.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Subjects & Questions</th>
+                            <td>180 questions total (60 questions each from Physics, Chemistry, and Mathematics). Each subject paper is worth 60 marks.</td>
+                        </tr>
+                    </table>
                 </div>
             </div>
             
-            <!-- Official Links Block (Green background for distinction) -->
-            <div class="official-links-block">
-                <h3 class="text-xl font-bold text-primary-green mb-4 border-b border-primary-green/20 pb-2">Official Examination Websites</h3>
-                <div class="grid md:grid-cols-3 gap-6">
-                    <div>
-                        <p class="font-semibold text-primary-green">JEE Main / JEE Advanced</p>
-                        <a href="https://jeemain.nta.nic.in/" target="_blank" class="text-gray-600 hover:text-blue-700 hover:underline text-sm block">jeemain.nta.nic.in</a>
-                        <a href="https://jeeadv.ac.in/" target="_blank" class="text-gray-600 hover:text-blue-700 hover:underline text-sm block">jeeadv.ac.in</a>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-primary-green">NEET (UG)</p>
-                        <a href="https://neet.nta.nic.in/" target="_blank" class="text-gray-600 hover:text-blue-700 hover:underline text-sm block">neet.nta.nic.in</a>
-                        <a href="https://mcc.nic.in/" target="_blank" class="text-gray-600 hover:text-blue-700 hover:underline text-sm block">mcc.nic.in (Counselling)</a>
-                    </div>
-                    <div>
-                        <p class="font-semibold text-primary-green">KCET</p>
-                        <a href="https://cetonline.karnataka.gov.in/kea/" target="_blank" class="text-gray-600 hover:text-blue-700 hover:underline text-sm block">cetonline.karnataka.gov.in/kea/</a>
-                    </div>
-                </div>
-            </div>
-            <!-- END OFFICIAL SITES BLOCK -->
-
-        </section>
-
-        <!-- Exam Info Section (Tab 2) -->
-        <section id="info-section" class="tab-content hidden space-y-8">
-            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Detailed Exam Pattern & Structure</h2>
-            <div class="space-y-6">
-
-                <!-- JEE Main Details -->
-                <div class="exam-card">
-                    <h3 class="text-2xl font-bold text-primary-green mb-4 border-b border-gray-100 pb-2">JEE Main Exam Pattern (2026)</h3>
-                    <table class="w-full text-left table-auto border-collapse">
-                        <tbody class="divide-y divide-gray-200">
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 w-1/4 align-top">Purpose</th>
-                                <td class="py-3 text-gray-600">Admission to NITs, IIITs, CFTIs, and qualifying for JEE Advanced.</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Exam Mode</th>
-                                <td class="py-3 text-gray-600">Computer-based Test (CBT), except for the Drawing section in B.Arch.</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Duration</th>
-                                <td class="py-3 text-gray-600">3 hours (180 minutes) per paper.</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Marking Scheme</th>
-                                <td class="py-3 text-gray-600"><strong>+4</strong> for correct answer, <strong>-1</strong> for incorrect answer (for both MCQs and Numerical Value Questions). Total 300 Marks.</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Subjects & Structure</th>
-                                <td class="py-3 text-gray-600">
-                                    <ul class="list-disc list-inside space-y-1">
-                                        <li>**Paper 1 (B.E./B.Tech):** 75 questions total (25 each from Physics, Chemistry, and Mathematics). Each subject has 20 MCQs (Section A) and 10 Numerical Value Questions (Section B), where 5 must be attempted.</li>
-                                    </ul>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <!-- DOWNLOAD SYLLABUS BUTTON FOR JEE -->
-                    <div class="mt-6 text-center">
-                        <a href="https://drive.google.com/uc?export=download&id=1SXSkh-t914oPb3LR1qqH8LL2VtLSIY2d" target="_blank" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                            Download JEE Syllabus (Official)
-                        </a>
-                    </div>
-                </div>
-
-                <!-- NEET UG Details -->
-                <div class="exam-card">
-                    <h3 class="text-2xl font-bold text-primary-green mb-4 border-b border-gray-100 pb-2">NEET (UG) Exam Pattern (2026)</h3>
-                    <table class="w-full text-left table-auto border-collapse">
-                        <tbody class="divide-y divide-gray-200">
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 w-1/4 align-top">Purpose</th>
-                                <td class="py-3 text-gray-600">Admission to MBBS, BDS, and AYUSH (BAMS, BHMS, etc.) courses across India.</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Exam Mode</th>
-                                <td class="py-3 text-gray-600">Offline (Pen-and-paper OMR-based).</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Duration</th>
-                                <td class="py-3 text-gray-600">3 hours and 20 minutes (200 minutes).</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Marking Scheme</th>
-                                <td class="py-3 text-gray-600"><strong>+4</strong> for correct answer, <strong>-1</strong> for incorrect answer. Total 720 Marks.</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Subjects & Structure</th>
-                                <td class="py-3 text-gray-600">
-                                    <ul class="list-disc list-inside space-y-1">
-                                        <li>180 Multiple-Choice Questions (MCQs) to be attempted out of 200 questions.</li>
-                                        <li>Physics (45 Qs), Chemistry (45 Qs), Biology (Botany & Zoology - 90 Qs).</li>
-                                    </ul>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <!-- DOWNLOAD SYLLABUS BUTTON FOR NEET -->
-                    <div class="mt-6 text-center">
-                        <a href="https://drive.google.com/uc?export=download&id=1qvebJXj2_Hwuezh6rj3r1crvLPKrtu6u" target="_blank" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">
-                            Download NEET Syllabus (Official)
-                        </a>
-                    </div>
-                </div>
-
-                <!-- KCET Details -->
-                <div class="exam-card">
-                    <h3 class="text-2xl font-bold text-primary-green mb-4 border-b border-gray-100 pb-2">KCET Exam Pattern (2026)</h3>
-                    <table class="w-full text-left table-auto border-collapse">
-                        <tbody class="divide-y divide-gray-200">
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 w-1/4 align-top">Purpose</th>
-                                <td class="py-3 text-gray-600">Admission to Engineering, Pharmacy, Agriculture, and other UG courses in Karnataka.</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Exam Mode</th>
-                                <td class="py-3 text-gray-600">Offline (Pen-and-paper OMR-based).</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Duration</th>
-                                <td class="py-3 text-gray-600">80 minutes for each subject paper (Physics, Chemistry, Maths/Biology).</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Marking Scheme</th>
-                                <td class="py-3 text-gray-600"><strong>+1</strong> for correct answer. **NO NEGATIVE MARKING.**</td>
-                            </tr>
-                            <tr>
-                                <th class="py-3 font-semibold text-gray-700 align-top">Subjects & Structure</th>
-                                <td class="py-3 text-gray-600">
-                                    <ul class="list-disc list-inside space-y-1">
-                                        <li>60 questions in each subject (Physics, Chemistry, Mathematics/Biology).</li>
-                                        <li>Total 180 questions (excluding Kannada Language Test).</li>
-                                    </ul>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-            </div>
+            <!-- NEW SECTION FOR OFFICIAL LINKS -->
+            <section class="official-links-section">
+                <h2 class="section-title">Official Websites for Exam Information</h2>
+                <ul>
+                    <li><a href="https://jeemain.nta.nic.in/" target="_blank"><strong>JEE Main (NTA)</strong>: jeemain.nta.nic.in</a></li>
+                    <li><a href="https://jeeadv.ac.in/" target="_blank"><strong>JEE Advanced (Conducting IIT)</strong>: jeeadv.ac.in</a></li>
+                    <li><a href="https://neet.nta.nic.in/" target="_blank"><strong>NEET (UG) (NTA)</strong>: neet.nta.nic.in</a></li>
+                    <li><a href="https://cetonline.karnataka.gov.in/kea/" target="_blank"><strong>KCET (KEA)</strong>: cetonline.karnataka.gov.in/kea</a></li>
+                </ul>
+            </section>
         </section>
 
     </main>
     <script type="module">
-        // Import necessary Firebase functions
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
         
-        // --- Firebase Configuration and Initialization (Mandatory Canvas Globals) ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // --- SUPABASE CREDENTIALS ---
+        const SUPABASE_URL = 'https://evetjiyruynvqhjfmuny.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV2ZXRqaXlydXludnFoamZtdW55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1ODIyNjUsImV4cCI6MjA3NTE1ODI2NX0.5wjRCHPesj_4OywiFyFyh3uuYtD8zOGBY9aARUAOmxU';
         
-        // Ensure firebase config is not empty before initialization
-        let app, auth;
-        if (Object.keys(firebaseConfig).length > 0) {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            
-            // Authentication Handling
-            const initializeAuth = async () => {
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        // Fallback to anonymous sign-in if no custom token is provided
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("Firebase authentication error:", error);
-                }
-            };
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            initializeAuth();
-
-            // Auth State Listener for UI updates
-            onAuthStateChanged(auth, user => {
-                const userAvatar = document.getElementById('user-avatar');
-                // Use a default name if user is anonymous/new
-                const userDisplayName = user?.displayName || user?.email || 'User'; 
-                if (user) {
-                    // Update avatar with user's initial or 'U'
-                    userAvatar.textContent = userDisplayName.charAt(0).toUpperCase();
-                } else {
-                    // Placeholder for non-authenticated state
-                    userAvatar.textContent = 'U';
-                }
-            });
-
-            // Logout Handler: Signs out and redirects to login.html
-            const handleLogout = (event) => {
-                event.preventDefault(); // Prevent default link/button action
-                signOut(auth)
-                    .then(() => {
-                        window.location.href = 'login.html'; // Redirect to login
-                    })
-                    .catch(e => console.error("Logout Error:", e));
+        // --- AUTHENTICATION ---
+        async function checkAuth() {
+            // Note: In the final Canvas environment, you would use Firebase for authentication. 
+            // This is a placeholder for a secure setup.
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session && session.user) {
+                const userName = session.user.email || 'User';
+                document.getElementById('user-avatar').textContent = userName.charAt(0).toUpperCase();
+            } else {
+                // For a live environment, you might redirect to a login page.
+                // Keeping the user initialized as 'U' for demo.
+                console.log("No active user session detected.");
             }
-
-            document.getElementById('logout-btn').addEventListener('click', handleLogout);
-            // Check if mobile logout button exists before adding listener
-            const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-            if (mobileLogoutBtn) {
-                 mobileLogoutBtn.addEventListener('click', handleLogout);
-            }
-            
-        } else {
-             // Fallback for environment without Firebase config
-             console.warn("Firebase configuration is missing. Authentication features are disabled.");
         }
+        checkAuth();
         
-        // --- UI Logic for Tabs and Mobile Menu ---
+        const handleLogout = () => {
+            supabase.auth.signOut().then(() => {
+                console.log("User logged out.");
+                // window.location.href = 'login.html'; // Redirect to login page after successful logout
+            }).catch(e => console.error("Logout failed:", e));
+        };
+        
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+        
+        const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
+        if (mobileLogoutBtn) mobileLogoutBtn.addEventListener('click', handleLogout);
+
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('mobile-menu').classList.toggle('active');
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             const tabButtons = document.querySelectorAll('.tab-btn');
             const tabContents = document.querySelectorAll('.tab-content');
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
 
-            // Tab functionality
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     // Remove 'active' class from all buttons and content
                     tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.add('hidden'));
+                    tabContents.forEach(content => content.classList.remove('active'));
                     
                     // Add 'active' class to the clicked button
                     button.classList.add('active');
                     
                     // Show the corresponding content section
                     const targetTabId = button.dataset.tab;
-                    document.getElementById(targetTabId).classList.remove('hidden');
+                    const targetContent = document.getElementById(targetTabId);
+                    if(targetContent) {
+                        targetContent.classList.add('active');
+                    }
                 });
-            });
-
-            // Mobile menu toggle
-            mobileMenuBtn.addEventListener('click', () => {
-                mobileMenu.classList.toggle('active'); // Use original '.mobile-menu.active' class
             });
         });
     </script>
