@@ -187,6 +187,12 @@
                 /* CRITICAL FIX: Increase padding for mobile where buttons stack vertically (approx 2 rows high) */
                 padding-bottom: 160px; 
             }
+            
+            /* ADDITION for Change 1: 5% padding below options container on mobile */
+            .options-container {
+                margin-bottom: 5vh; /* Using 5vh (5% of viewport height) for a noticeable gap */
+            }
+
             .test-header { padding: 0.5rem 1rem; } .test-title { font-size: 1rem; }
             
             .question-controls { 
@@ -268,9 +274,14 @@
         </main>
     </div>
 
+    <!-- MODIFIED SUBMIT MODAL (Change 2) -->
     <div class="modal-overlay hidden" id="submit-modal">
         <div class="modal">
             <h3>Submit Test?</h3>
+            <!-- Stats will be inserted here by JavaScript -->
+            <div id="submit-stats" style="text-align: left; margin-bottom: 1rem; padding: 0.75rem; border: 1px solid var(--border); border-radius: 0.375rem; background-color: var(--muted);">
+                <!-- Stats content will be dynamically loaded here -->
+            </div>
             <p>Are you sure you want to submit? This action cannot be undone.</p>
             <div class="modal-actions">
                 <button class="btn btn-outline" id="cancel-submit">Cancel</button>
@@ -546,6 +557,24 @@
                 sessionStorage.setItem('test_session', JSON.stringify(this.testSession));
             }
             
+            // ADDED: Method to calculate answered/unanswered questions (Change 2)
+            getTestStats() {
+                const totalQuestions = this.testSession.testData.questions_data.length;
+                let answeredCount = 0;
+                
+                // Check if an answer exists and is not null/empty string
+                Object.values(this.testSession.answers).forEach(answer => {
+                    // Answer is considered valid if it's not undefined/null and not an empty string (for fill-in-the-blanks)
+                    if (answer !== undefined && answer !== null && answer !== '') {
+                        answeredCount++;
+                    }
+                });
+
+                const unansweredCount = totalQuestions - answeredCount;
+
+                return { total: totalQuestions, answered: answeredCount, unanswered: unansweredCount };
+            }
+
             submitTest() {
                 clearInterval(this.examTimerInterval);
                 clearInterval(this.questionTimerInterval);
@@ -621,7 +650,31 @@
             }
 
             initializeEventListeners() {
-                document.getElementById('submit-btn').addEventListener('click', () => document.getElementById('submit-modal').classList.remove('hidden'));
+                // MODIFIED: Submit button event listener to show stats (Change 2)
+                document.getElementById('submit-btn').addEventListener('click', () => {
+                    const stats = this.getTestStats();
+                    
+                    // Build the HTML for the statistics
+                    const statsHtml = `
+                        <p style="margin: 0 0 0.5rem 0; font-size: 0.95rem; font-weight: 600; color: #374151;">Test Summary</p>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="color: var(--muted-foreground);">Total Questions:</span> 
+                            <strong>${stats.total}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                            <span style="color: #16a34a;">Answered:</span> 
+                            <strong style="color: #16a34a;">${stats.answered}</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: #dc2626;">Unanswered:</span> 
+                            <strong style="color: #dc2626;">${stats.unanswered}</strong>
+                        </div>
+                    `;
+                    document.getElementById('submit-stats').innerHTML = statsHtml;
+
+                    document.getElementById('submit-modal').classList.remove('hidden');
+                });
+                
                 document.getElementById('cancel-submit').addEventListener('click', () => document.getElementById('submit-modal').classList.add('hidden'));
                 document.getElementById('confirm-submit').addEventListener('click', () => this.submitTest());
                 
