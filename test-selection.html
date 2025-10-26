@@ -38,13 +38,88 @@
         .page-title { font-size: 2.25rem; font-weight: 700; color: var(--primary); }
         .page-subtitle { font-size: 1.1rem; color: var(--muted-foreground); margin-top: 0.5rem; }
 
-        /* Filter Section */
-        .filter-section { background-color: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 2rem; }
-        /* Adjusted grid to accommodate the new filter */
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        /* --- FILTER STYLES --- */
+        .filter-section { 
+            background-color: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; 
+            padding: 1rem; margin-bottom: 2rem; 
+        }
+
+        /* NEW: Search Bar Styling (Always visible) */
+        .search-input-wrapper {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .search-input {
+            width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 0.5rem; 
+            background-color: #f3f4f6; font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.2);
+            outline: none;
+        }
+
+
+        .filter-header {
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+            padding: 0.5rem; margin-bottom: 0.5rem;
+        }
+        .filter-header h2 { font-size: 1.125rem; font-weight: 600; color: var(--foreground); }
+        .filter-header span { font-size: 1.5rem; transition: transform 0.3s; }
+        
+        /* Filter Content (Collapsible on Mobile) */
+        .filter-content { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 1rem; 
+            overflow: hidden; 
+            transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out; 
+            max-height: 500px; /* Default for desktop */
+            padding-top: 0.5rem;
+        }
+        
         .filter-group label { font-weight: 500; font-size: 0.875rem; display: block; margin-bottom: 0.5rem; }
-        .filter-select { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 0.375rem; background-color: #f9fafb; transition: all 0.2s; }
+        .filter-select { 
+            width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 0.375rem; 
+            background-color: #f9fafb; transition: all 0.2s; 
+            /* Added margin-bottom on mobile group selects for separation */
+            margin-bottom: 0.5rem; 
+        }
         .filter-select:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 2px rgba(132, 204, 22, 0.2); }
+
+        /* Mobile specific styles for the filter */
+        @media (max-width: 768px) {
+            .nav-links, .nav-user { display: none; }
+            .mobile-menu-btn { display: block; }
+
+            /* Mobile: Stacks filters vertically */
+            .filter-content { 
+                grid-template-columns: 1fr; /* Single column layout on mobile */
+                max-height: 0;
+                padding-top: 0;
+            }
+            .filter-content.active {
+                max-height: 500px; /* Expands when active */
+                padding-top: 1rem;
+            }
+            .filter-content.active + .filter-header span {
+                transform: rotate(180deg);
+            }
+            .filter-header span {
+                /* Arrow down */
+                transform: rotate(0deg);
+            }
+            .filter-header h2 {
+                font-size: 1rem;
+            }
+            .filter-section {
+                padding: 0.5rem 1rem;
+            }
+        }
+        /* --- END FILTER STYLES --- */
+
 
         /* Test Grid */
         .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
@@ -112,9 +187,9 @@
         }
         .modal-close-btn:hover { background-color: #166534; }
 
-        @media (max-width: 768px) {
-            .nav-links, .nav-user { display: none; }
-            .mobile-menu-btn { display: block; }
+        @media (min-width: 769px) {
+            /* On desktop, the header is still hidden, but the filter content is visible by default */
+            .filter-header-desktop { display: none; }
         }
     </style>
 </head>
@@ -166,7 +241,19 @@
         </header>
 
         <section class="filter-section">
-            <div class="filter-grid">
+            
+            <!-- NEW: Fixed Search Bar -->
+            <div class="search-input-wrapper">
+                <input type="text" id="search-input" class="search-input" placeholder="Search by Test Title, ID, or Description...">
+            </div>
+
+            <!-- New Filter Header for Mobile Collapsible -->
+            <div class="filter-header filter-header-desktop" id="filter-header">
+                <h2>Additional Filters</h2>
+                <span>&#9660;</span> <!-- Down arrow -->
+            </div>
+
+            <div class="filter-content" id="filter-content">
                 <div class="filter-group">
                     <label for="exam-filter">Exam Type</label>
                     <select id="exam-filter" class="filter-select">
@@ -239,9 +326,11 @@
             constructor() {
                 this.allTests = [];
                 this.filteredTests = [];
+                this.searchQuery = ''; // NEW: State to hold search term
                 this.stateContainer = document.getElementById('state-container');
                 this.testGrid = document.getElementById('test-grid');
                 this.modal = document.getElementById('subscription-modal');
+                this.filterContent = document.getElementById('filter-content');
 
                 document.getElementById('modal-close-btn').addEventListener('click', () => {
                     this.modal.style.display = 'none';
@@ -258,8 +347,20 @@
                         console.log("User not logged in. Showing tests with database-driven availability.");
                     }
                 });
+
+                // Initial state check for mobile filter collapse
+                this.initializeFilterState();
             }
             
+            initializeFilterState() {
+                // Check if we are on a mobile width on load (less than 769px)
+                if (window.innerWidth <= 768) {
+                    this.filterContent.classList.remove('active');
+                } else {
+                    this.filterContent.classList.add('active'); // Keep expanded on desktop
+                }
+            }
+
             async loadUser(user) {
                 const userName = user.displayName || user.email || 'User';
                 document.getElementById('user-avatar').textContent = userName.charAt(0).toUpperCase();
@@ -300,6 +401,19 @@
                 document.getElementById('type-filter').addEventListener('change', () => this.applyFilters()); 
                 document.getElementById('duration-filter').addEventListener('change', () => this.applyFilters());
                 
+                // NEW: Search Input Listener (using keyup for real-time filtering)
+                document.getElementById('search-input').addEventListener('keyup', (e) => {
+                    this.searchQuery = e.target.value.toLowerCase();
+                    this.applyFilters();
+                });
+                
+                // Mobile Filter Toggle
+                document.getElementById('filter-header').addEventListener('click', () => {
+                    if (window.innerWidth <= 768) {
+                        this.filterContent.classList.toggle('active');
+                    }
+                });
+
                 // Logout handlers
                 const handleLogout = () => signOut(auth).catch(e => console.error(e));
                 document.getElementById('logout-btn').addEventListener('click', handleLogout);
@@ -317,8 +431,20 @@
                 const typeFilter = document.getElementById('type-filter').value;
                 const duration = document.getElementById('duration-filter').value;
                 
-                // 1. Filter based on criteria.
+                // 1. Start filtering with the Search Query
                 let filtered = this.allTests.filter(test => {
+                    const query = this.searchQuery;
+                    if (!query) return true; // No search query means no filtering needed
+
+                    const titleMatch = test.title?.toLowerCase().includes(query);
+                    const idMatch = test.id?.toLowerCase().includes(query);
+                    const descriptionMatch = test.description?.toLowerCase().includes(query);
+
+                    return titleMatch || idMatch || descriptionMatch;
+                });
+                
+                // 2. Apply dropdown filters
+                filtered = filtered.filter(test => {
                     const examMatch = examType === 'all' || test.type === examType;
                     const subjectMatch = subject === 'all' || (test.subjects && test.subjects.includes(subject));
                     
@@ -341,13 +467,10 @@
                     return examMatch && subjectMatch && typeMatch && durationMatch;
                 });
                 
-                // 2. Apply custom sorting to put available tests (isAvailable: true) first, 
-                // followed by blocked tests (isAvailable: false).
-                // Within each group, sort by original index for stable ordering.
+                // 3. Apply custom sorting to put available tests (isAvailable: true) first
                 filtered.sort((a, b) => {
                     // Primary Sort: Available tests first (descending sort on isAvailable)
                     if (a.isAvailable !== b.isAvailable) {
-                        // true (1) - false (0) = 1 (b comes first) -> AVAILABLE first
                         return b.isAvailable - a.isAvailable;
                     }
 
