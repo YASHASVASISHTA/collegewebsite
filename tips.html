@@ -8,15 +8,17 @@
         /* Modern, clean aesthetic based on Tailwind principles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; line-height: 1.6; color: #374151; background-color: #f9fafb; }
+        
+        /* Updated Color variables from dashboard.html */
         :root {
-            --primary: #059669; /* Emerald Green */
+            --primary: #15803d; /* Deeper Green from Dashboard */
             --primary-foreground: #ffffff; 
+            --secondary: #84cc16; /* Bright Lime Green from Dashboard */
             --card: #ffffff;
             --border: #e5e7eb; 
             --muted-foreground: #6b7280; 
             --foreground: #374151; 
             --muted: #f3f4f6;
-            --secondary: #d1fae5; /* Light Emerald */
             --warning: #f59e0b;
         }
 
@@ -88,8 +90,6 @@
             border-color: var(--primary);
         }
 
-        /* Removed premium styles */
-
         .download-title {
             font-size: 1.25rem;
             font-weight: 700;
@@ -110,19 +110,20 @@
             gap: 0.5rem;
             transition: all 0.2s;
             margin-top: 1.5rem; 
-            box-shadow: 0 2px 4px rgba(5, 150, 105, 0.4);
+            /* Updated shadow for primary color */
+            box-shadow: 0 2px 4px rgba(21, 128, 61, 0.4); 
             cursor: pointer;
         }
         .download-btn:hover {
-            background-color: #047857; /* Darker Emerald */
+            background-color: #166534; /* Darker Primary */
             transform: translateY(1px);
         }
 
         .file-description {
-             color: var(--muted-foreground); 
-             margin-bottom: 1rem; 
-             font-size: 0.95rem;
-             min-height: 2.5rem; /* Ensure consistent card height */
+            color: var(--muted-foreground); 
+            margin-bottom: 1rem; 
+            font-size: 0.95rem;
+            min-height: 2.5rem; /* Ensure consistent card height */
         }
         
         .main-container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
@@ -135,13 +136,9 @@
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             margin-top: 2rem;
         }
-
-        /* Removed Modal/Message Box Styling */
     </style>
 </head>
 <body>
-    <!-- Message Box Modal - REMOVED -->
-
     <nav class="navbar">
         <div class="nav-container">
             <a href="dashboard.html" class="nav-brand">ExamAce</a>
@@ -168,7 +165,7 @@
                 <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
                 <li><a href="resources.html" class="nav-link">Resources</a></li>
                 <li><a href="tips.html" class="nav-link active">Formulas & Revision</a></li>
-               <li><a href="info.html" class="nav-link">Exam Info</a></li>
+                <li><a href="info.html" class="nav-link">Exam Info</a></li>
                 <li><a href="#" id="mobile-logout-btn" class="nav-link">Logout</a></li>
             </ul>
         </div>
@@ -230,7 +227,6 @@
                 </button>
             </div>
 
-
              <div class="download-card" data-access="free">
                 <span class="download-title" style="color: var(--primary);">EXTRA FORMULAS (ADVANCED)</span>
                 <p class="file-description">A curated set of advanced and supplementary formulas that go **beyond** the basic NCERT requirements.</p>
@@ -244,11 +240,9 @@
 
         </div>
         
-    
     </main>
 
     <script>
-        // NOTE: Modal and subscription gating logic has been removed as all items are now free.
         document.addEventListener('DOMContentLoaded', () => {
             
             // Download Logic for Download Buttons (All are now free and functional)
@@ -275,27 +269,36 @@
         });
     </script>
      <script type="module">
-      
+        // Mandatory imports for Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         
-        const firebaseConfig = {
-          apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
-          authDomain: "testseries-38752.firebaseapp.com",
-          projectId: "testseries-38752",
-          storageBucket: "testseries-38752.firebasestorage.app",
-          messagingSenderId: "519384534407",
-          appId: "1:519384534407:web:201265a9d703708334d722"
-        };
-      
+        // Use global variables for configuration
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
+        // Required sign-in logic for the Canvas environment
+        (async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Firebase sign-in error:", e);
+            }
+        })();
+
         onAuthStateChanged(auth, user => {
             if (user) {
+                // If the user object is available (signed in)
                 const userName = user.displayName || user.email || 'User';
                 document.getElementById('user-avatar').textContent = userName.charAt(0).toUpperCase();
             } else {
+                // Redirect logic if required, commented out for sandbox
                 // window.location.href = 'login.html'; 
             }
         });
@@ -304,15 +307,16 @@
             event.preventDefault();
             signOut(auth)
                 .then(() => {
+                    // Redirect to login page after sign-out
                     window.location.href = 'login.html';
                 })
                 .catch(e => console.error("Logout Error:", e));
         };
         document.getElementById('logout-btn').addEventListener('click', handleLogout);
         document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
-       
+        
+        // Initial placeholder for avatar until auth state is known
         document.getElementById('user-avatar').textContent = 'S'; 
     </script>
 </body>
 </html>
-
