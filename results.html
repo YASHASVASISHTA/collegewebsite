@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detailed Results - ExamAce</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <style>
         /* Reset and base styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -54,7 +55,7 @@
             .mobile-menu-btn { display: block; }
         }
         @media (min-width: 993px) {
-             /* Ensure desktop elements are shown above breakpoint */
+            /* Ensure desktop elements are shown above breakpoint */
             .nav-links, .nav-user { display: flex; }
             .mobile-menu-btn, .mobile-menu { display: none; }
         }
@@ -141,13 +142,13 @@
             .summary-score { font-size: 3.5rem; }
             .summary-test-name { font-size: 1.5rem; }
         }
+
     </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-container">
             <a href="dashboard.html" class="nav-brand">ExamAce</a>
-            <!-- Desktop Links -->
             <ul class="nav-links">
                 <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
                 <li><a href="test-selection.html" class="nav-link">Mock Tests</a></li>
@@ -155,15 +156,12 @@
                 <li><a href="tips.html" class="nav-link">Formulas & Revision</a></li>
                 <li><a href="info.html" class="nav-link">Exam Info</a></li>
             </ul>
-            <!-- Desktop User/Logout -->
             <div class="nav-user">
                 <div class="user-avatar" id="user-avatar">U</div>
                 <a href="#" id="logout-btn" class="nav-link" style="border-bottom: none;">Logout</a>
             </div>
-            <!-- Mobile Menu Toggle -->
             <button class="mobile-menu-btn" id="mobile-menu-btn">&#9776;</button>
         </div>
-        <!-- Mobile Menu -->
         <div class="mobile-menu" id="mobile-menu">
             <ul class="mobile-nav-links">
                 <li><a href="dashboard.html" class="nav-link">Dashboard</a></li>
@@ -177,7 +175,7 @@
     </nav>
 
     <main class="main-container">
-        <div id="loading-state"><h1>Calculating Results...</h1></div>
+        <div id="loading-state"><h1>Calculating Results... Preparing Download...</h1></div>
         <div id="results-content" style="display:none;">
             <section class="summary-header">
                 <div class="summary-title">Your Score for</div>
@@ -190,11 +188,7 @@
                     <div class="summary-stat"><div class="summary-stat-value" id="stat-accuracy">0%</div><div class="summary-stat-label">Accuracy</div></div>
                 </div>
             </section>
-
-            <div class="download-message" style="text-align: center; margin-bottom: 2rem; color: var(--muted-foreground);">
-                <p>The solution is downloaded automatically into your device.</p>
-            </div>
-
+            
             <div class="results-grid">
                 <div class="card" id="answer-review-card">
                     <h2 class="card-title">Detailed Analysis</h2>
@@ -218,7 +212,6 @@
                             <div id="time-container"></div>
                         </div>
                         <div class="action-buttons">
-                        
                             <a href="test-selection.html" class="btn btn-outline">Take Another Test</a>
                         </div>
                     </div>
@@ -228,397 +221,449 @@
     </main>
 
     <script type="module">
- import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-// New imports for Firestore: getDoc, updateDoc, and arrayUnion are added
-import { getFirestore, doc, setDoc, serverTimestamp, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-// Your Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
-    authDomain: "testseries-38752.firebaseapp.com",
-    projectId: "testseries-38752",
-    storageBucket: "testseries-38752.firebasestorage.app",
-    messagingSenderId: "519384534407",
-    appId: "1:519384534407:web:201265a9d703708334d722",
-    measurementId: "G-XBHHK5W8VE"
-};
-
-let app, auth, db;
-
-try {
-    if (!firebaseConfig.apiKey) {
-        console.error("Firebase Initialization Error: API key is missing.");
-        document.getElementById('loading-state').innerHTML = `<h1>Firebase Initialization Error: API key is missing.</h1>`;
-    } else {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        console.log("Firebase initialized successfully.");
-    }
-} catch (error) {
-    console.error("Firebase Initialization Error:", error);
-    document.getElementById('loading-state').innerHTML = `<h1>Firebase Initialization Error. Please check your console.</h1>`;
-}
-
-class DetailedResultsPage {
-    constructor() {
-        this.results = null;
-        this.user = null;
-        this.solutionsDownloaded = false;
-
-        if (auth) {
-            onAuthStateChanged(auth, user => {
-                // CRITICAL: Only proceed if user exists AND is NOT anonymous.
-                if (user && !user.isAnonymous) { 
-                    this.user = user;
-                    document.getElementById('user-avatar').textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
-                    this.loadAndSaveResults();
-                } else {
-                    // Redirect if not logged in or if the user is anonymous
-                    console.log("User is not signed in or is anonymous. Redirecting to login.");
-                    window.location.href = 'login.html';
-                }
-            });
-        }
-
-        this.initializeEventListeners();
-    }
-
-    initializeEventListeners() {
-        const handleLogout = (event) => {
-            event.preventDefault();
-            signOut(auth)
-                .then(() => {
-                    window.location.href = 'login.html';
-                })
-                .catch(e => console.error("Logout error:", e));
-        };
-        document.getElementById('logout-btn').addEventListener('click', handleLogout);
-        document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
-
-        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-            document.getElementById('mobile-menu').classList.toggle('active');
-        });
-    }
-
-    async loadAndSaveResults() {
-        const resultsStr = sessionStorage.getItem('test_results');
-        if (!resultsStr) {
-            document.getElementById('loading-state').innerHTML = '<h1>No results found.</h1>';
-            return;
-        }
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, serverTimestamp, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        if (!this.user.email) {
-            console.error("Cannot save results: User must be signed in with an email account for persistent results tracking.");
-            document.getElementById('loading-state').innerHTML = '<h1>Cannot save results. Please ensure you are signed in with an email account, as the email address is required to link results to your profile.</h1>';
-            document.getElementById('loading-state').style.color = 'var(--destructive)'; 
-            return;
-        }
-
+        // Your Firebase configuration (kept as per request)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
+            authDomain: "testseries-38752.firebaseapp.com",
+            projectId: "testseries-38752",
+            storageBucket: "testseries-38752.firebasestorage.app",
+            messagingSenderId: "519384534407",
+            appId: "1:519384534407:web:201265a9d703708334d722",
+            measurementId: "G-XBHHK5W8VE"
+        };
+        
+        let app, auth, db;
+        
         try {
-            this.results = JSON.parse(resultsStr);
-
-            // Save the summary data to Firestore
-            await this.saveResultsSummaryToFirestore();
-
-            // Render the page after saving
-            this.renderPage();
-            this.downloadSolutions();
-
+            if (!firebaseConfig.apiKey) {
+                console.error("Firebase Initialization Error: API key is missing.");
+                document.getElementById('loading-state').innerHTML = `<h1>Firebase Initialization Error: API key is missing.</h1>`;
+            } else {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                console.log("Firebase initialized successfully.");
+            }
         } catch (error) {
-            console.error('Error processing results:', error);
-            document.getElementById('loading-state').innerHTML = '<h1>Error loading results data.</h1>';
+            console.error("Firebase Initialization Error:", error);
+            document.getElementById('loading-state').innerHTML = `<h1>Firebase Initialization Error. Please check your console.</h1>`;
         }
-    }
-    
-    /**
-     * Helper function to sanitize email for use as a Firestore Document ID.
-     * Replaces non-alphanumeric characters with underscores.
-     */
-    sanitizeEmail(email) {
-        // Replace '.' and '@' and other non-alphanumeric chars with an underscore
-        return email.replace(/[^a-zA-Z0-9]/g, '_');
-    }
-
-    // --- REVISED saveResultsToFirestore function (FIXED serverTimestamp inside array) ---
-    async saveResultsSummaryToFirestore() {
-        if (!this.user || !this.results || !db) {
-            console.error("User, results, or database not available. Cannot save.");
-            return;
-        }
-
-        const userEmail = this.user.email;
-        const sanitizedEmail = this.sanitizeEmail(userEmail);
-        const testAttemptId = `${this.results.testData.id}_${Date.now()}`;
-
-        // 1. Prepare the data for the single test attempt
-        const testAttemptData = {
-            testAttemptId: testAttemptId, 
-            // FIX: Use ISO string timestamp inside the array item to avoid Firestore error
-            timestamp: new Date().toISOString(), 
-            testId: this.results.testData.id,
-            testName: this.results.testData.title,
-            totalMarks: this.results.testData.marks,
-            marksObtained: this.results.finalScore,
-            timeTakenSeconds: this.results.timeTaken,
-            correctCount: this.results.correct,
-            incorrectCount: this.results.incorrect,
-            unansweredCount: this.results.unanswered,
-            subjectWiseMarks: {}
-        };
-
-        // Iterate through subjects and safely get values
-        for (const subjectName in this.results.subjectWise) {
-            const subjectData = this.results.subjectWise[subjectName];
-            if (subjectData) {
-                testAttemptData.subjectWiseMarks[subjectName] = {
-                    correct: subjectData.correct || 0,
-                    incorrect: subjectData.incorrect || 0,
-                    total: subjectData.total || 0, 
-                };
-            }
-        }
-
-        // Use the sanitized email as the Document ID in the 'user_summaries' collection
-        const userDocRef = doc(db, `user_summaries`, sanitizedEmail);
-
-        try {
-            // Check if the document exists
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-                // Document exists, append the new test result to the 'tests' array
-                await updateDoc(userDocRef, {
-                    tests: arrayUnion(testAttemptData),
-                    // Use serverTimestamp() at the root level for last updated time
-                    lastUpdated: serverTimestamp() 
-                });
-                console.log(`Test result appended successfully for user ${userEmail}.`);
-            } else {
-                // Document does not exist, create it with the initial structure
-                await setDoc(userDocRef, {
-                    useremail: userEmail,
-                    userId: this.user.uid, 
-                    tests: [testAttemptData],
-                    // Use serverTimestamp() at the root level for creation and update time
-                    createdAt: serverTimestamp(), 
-                    lastUpdated: serverTimestamp() 
-                });
-                console.log(`New summary document created successfully for user ${userEmail}.`);
-            }
-            
-            // Clean up session storage after successful save
-            sessionStorage.removeItem('test_results');
-
-        } catch (e) {
-            console.error("Error saving summary results to Firestore: ", e);
-        }
-    }
-    // --- END REVISED saveResultsToFirestore function ---
-
-    downloadSolutions() {
-        if (!this.results || this.solutionsDownloaded) return;
-        this.solutionsDownloaded = true;
-
-        let solutionText = `Solutions for: ${this.results.testData.title}\n`;
-        solutionText += "========================================\n\n";
-
-        this.results.testData.questions_data.forEach((q, index) => {
-            solutionText += `Q${index + 1}: ${q.questionText}\n`;
-            if (q.questionImageUrl) {
-                solutionText += `(Image URL: ${q.questionImageUrl})\n`;
-            }
-            
-            const isFillInTheBlanks = q.options.length === 1 && q.options[0] === 'nil';
-            
-            if (isFillInTheBlanks) {
-                solutionText += `\nCorrect Answer: ${q.correctAnswer}\n`;
-            } else {
-                q.options.forEach((option, optIndex) => {
-                    solutionText += `   ${String.fromCharCode(65 + optIndex)}. ${option}\n`;
-                });
-                const correctOptionLetter = String.fromCharCode(65 + q.correctAnswer);
-                const correctOptionText = q.options[q.correctAnswer];
-                solutionText += `\nCorrect Answer: ${correctOptionLetter}. ${correctOptionText}\n`;
-            }
-            
-            let formattedSolution = q.solution || 'No detailed solution available.';
-            formattedSolution = formattedSolution.replace(/<br>/g, '\n').replace(/Solution: /g, '');
-            const steps = formattedSolution.split('\n').map(s => s.trim()).filter(s => s);
-            
-            solutionText += `Solution:\n`;
-            steps.forEach(step => {
-                solutionText += `- ${step}\n`;
-            });
-
-            solutionText += "----------------------------------------\n\n";
-        });
-
-        const blob = new Blob([solutionText], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const fileName = `${this.results.testData.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_solutions.txt`;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    renderPage() {
-        this.renderSummary();
-        this.renderSubjectBreakdown();
-        this.renderTimeAnalysis();
-        this.renderAnswerReview();
-        this.setupFilters();
-
-        document.getElementById('loading-state').style.display = 'none';
-        document.getElementById('results-content').style.display = 'block';
-    }
-
-    renderSummary() {
-        const attempted = this.results.correct + this.results.incorrect;
-        const accuracy = attempted > 0 ? ((this.results.correct / attempted) * 100).toFixed(1) : 0;
-
-        document.getElementById('test-name').textContent = this.results.testData.title;
-        document.getElementById('final-score').textContent = `${this.results.finalScore} / ${this.results.testData.marks}`;
-        document.getElementById('stat-correct').textContent = this.results.correct;
-        document.getElementById('stat-incorrect').textContent = this.results.incorrect;
-        document.getElementById('stat-unanswered').textContent = this.results.unanswered;
-        document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
-    }
-
-    renderSubjectBreakdown() {
-        const container = document.getElementById('subject-container');
-        container.innerHTML = '';
-        const subjects = this.results.subjectWise;
-        for (const subjectName in subjects) {
-            const data = subjects[subjectName];
-            if (!data) continue;
-            
-            const attempted = data.correct + data.incorrect;
-            const totalQuestions = data.total > 0 ? data.total : 1; 
-            const accuracy = attempted > 0 ? ((data.correct / attempted) * 100) : 0;
-            
-            container.innerHTML += `
-                <div class="subject-item">
-                    <div class="subject-header">
-                        <span>${subjectName}</span>
-                        <span>${accuracy.toFixed(1)}% Acc</span>
-                    </div>
-                    <div class="progress-bar"><div class="progress-fill" style="width: ${accuracy}%"></div></div>
-                </div>`;
-        }
-    }
-    
-    renderTimeAnalysis() {
-        const container = document.getElementById('time-container');
-        const timeTaken = this.results.timeTaken || 0;
-        const attemptedCount = this.results.correct + this.results.incorrect;
-        const avgTime = attemptedCount > 0 ? (timeTaken / attemptedCount).toFixed(0) : 0;
-        const formatTime = (s) => `${Math.floor(s/60)}m ${s%60}s`;
-
-        container.innerHTML = `
-            <div class="time-item"><span class="time-label">Time Taken</span><span class="time-value">${formatTime(timeTaken)}</span></div>
-            <div class="time-item"><span class="time-label">Total Time</span><span class="time-value">${this.results.testData.duration}m 0s</span></div>
-            <div class="time-item"><span class="time-label">Avg. Time/Ques</span><span class="time-value">${avgTime}s</span></div>
-        `;
-    }
-
-    renderAnswerReview(filter = 'all') {
-        const container = document.getElementById('review-container');
-        container.innerHTML = '';
         
-        this.results.testData.questions_data.forEach((q, index) => {
-            const userAnswer = this.results.answers[index];
-            const isFillInTheBlanks = q.options.length === 1 && q.options[0] === 'nil';
+        class DetailedResultsPage {
+            constructor() {
+                this.results = null;
+                this.user = null;
+                this.katex = null;
+        
+                if (auth) {
+                    onAuthStateChanged(auth, user => {
+                        // CRITICAL: Only proceed if user exists AND is NOT anonymous.
+                        if (user && !user.isAnonymous) { 
+                            this.user = user;
+                            document.getElementById('user-avatar').textContent = (user.displayName || user.email || 'U').charAt(0).toUpperCase();
+                            this.loadAndSaveResults();
+                        } else {
+                            // Redirect if not logged in or if the user is anonymous
+                            console.log("User is not signed in or is anonymous. Redirecting to login.");
+                            window.location.href = 'login.html';
+                        }
+                    });
+                }
+        
+                this.initializeEventListeners();
+                this.loadKatex();
+            }
+        
+            async loadKatex() {
+                try {
+                    const katexModule = await import('https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.mjs');
+                    this.katex = katexModule.default;
+                } catch (error) {
+                    console.error('Failed to load KaTeX:', error);
+                }
+            }
+        
+            /**
+             * Renders LaTeX using ** delimiters for on-page review via KaTeX.
+             */
+            renderLatex(text) {
+                if (!text || !this.katex) return text || '';
+                
+                // Replace **latex_content** with rendered KaTeX
+                return text.replace(/\*\*([^*]+)\*\*/g, (match, latex) => {
+                    try {
+                        return this.katex.renderToString(latex, {
+                            throwOnError: false,
+                            displayMode: false
+                        });
+                    } catch (e) {
+                        console.error('LaTeX rendering error:', e);
+                        return match;
+                    }
+                });
+            }
+        
+            initializeEventListeners() {
+                const handleLogout = (event) => {
+                    event.preventDefault();
+                    signOut(auth)
+                        .then(() => {
+                            window.location.href = 'login.html';
+                        })
+                        .catch(e => console.error("Logout error:", e));
+                };
+                document.getElementById('logout-btn').addEventListener('click', handleLogout);
+                document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
+        
+                document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                    document.getElementById('mobile-menu').classList.toggle('active');
+                });
+            }
 
-            let isCorrect = false;
-            if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
-                 if (isFillInTheBlanks) {
-                    isCorrect = parseFloat(userAnswer) === parseFloat(q.correctAnswer);
-                } else {
-                    isCorrect = userAnswer === q.correctAnswer;
+            /**
+             * Generates a static HTML file of the current results view and prompts a download.
+             */
+            downloadResultsAsHtml() {
+                if (!this.results) return; // Prevent download if results aren't loaded
+
+                // Clone the main results content node
+                const resultsContent = document.getElementById('results-content').cloneNode(true);
+                
+                // Remove the dynamic elements (filters, action buttons) from the cloned content
+                const filterContainer = resultsContent.querySelector('#question-filter');
+                if (filterContainer) filterContainer.remove();
+                const actionButtons = resultsContent.querySelector('.action-buttons');
+                if (actionButtons) actionButtons.remove();
+
+                // Construct a minimal HTML wrapper for the download
+                const title = this.results.testData.title || 'ExamAce Test Results';
+                const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title} - Download</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <style>${document.querySelector('style').innerHTML}</style>
+    <style>
+        /* Styles specific to the downloaded file: hide navbar/actions */
+        .navbar, .action-buttons, .question-filter { display: none !important; }
+        .main-container { padding-top: 2rem; }
+    </style>
+</head>
+<body>
+    <main class="main-container" style="max-width: 1400px; margin: 0 auto; padding: 2rem 1rem;">
+        <h1 style="text-align: center; margin-bottom: 2rem; color: var(--primary);">ExamAce Detailed Results</h1>
+        ${resultsContent.innerHTML}
+    </main>
+</body>
+</html>
+                `;
+
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Generate a clean filename
+                a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_Results_${new Date().toISOString().slice(0,10)}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        
+            async loadAndSaveResults() {
+                const resultsStr = sessionStorage.getItem('test_results');
+                if (!resultsStr) {
+                    document.getElementById('loading-state').innerHTML = '<h1>No results found.</h1>';
+                    return;
+                }
+                
+                if (!this.user.email) {
+                    console.error("Cannot save results: User must be signed in with an email account for persistent results tracking.");
+                    document.getElementById('loading-state').innerHTML = '<h1>Cannot save results. Please ensure you are signed in with an email account, as the email address is required to link results to your profile.</h1>';
+                    document.getElementById('loading-state').style.color = 'var(--destructive)'; 
+                    return;
+                }
+        
+                try {
+                    this.results = JSON.parse(resultsStr);
+        
+                    // Save the summary data to Firestore
+                    await this.saveResultsSummaryToFirestore();
+        
+                    // Wait for KaTeX to load before rendering (and downloading)
+                    if (!this.katex) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+        
+                    // Render the page after saving
+                    this.renderPage();
+                } catch (error) {
+                    console.error('Error processing results:', error);
+                    document.getElementById('loading-state').innerHTML = '<h1>Error loading results data.</h1>';
                 }
             }
             
-            let status = (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') ? (isCorrect ? 'correct' : 'incorrect') : 'unanswered';
+            /**
+             * Helper function to sanitize email for use as a Firestore Document ID.
+             */
+            sanitizeEmail(email) {
+                // Replace '.' and '@' and other non-alphanumeric chars with an underscore
+                return email.replace(/[^a-zA-Z0-9]/g, '_');
+            }
+        
+            /**
+             * Saves the test results summary to Firestore under the user's email.
+             */
+            async saveResultsSummaryToFirestore() {
+                if (!this.user || !this.results || !db) {
+                    console.error("User, results, or database not available. Cannot save.");
+                    return;
+                }
+        
+                const userEmail = this.user.email;
+                const sanitizedEmail = this.sanitizeEmail(userEmail);
+                const testAttemptId = `${this.results.testData.id}_${Date.now()}`;
+        
+                // 1. Prepare the data for the single test attempt
+                const testAttemptData = {
+                    testAttemptId: testAttemptId, 
+                    timestamp: new Date().toISOString(), 
+                    testId: this.results.testData.id,
+                    testName: this.results.testData.title,
+                    totalMarks: this.results.testData.marks,
+                    marksObtained: this.results.finalScore,
+                    timeTakenSeconds: this.results.timeTaken,
+                    correctCount: this.results.correct,
+                    incorrectCount: this.results.incorrect,
+                    unansweredCount: this.results.unanswered,
+                    subjectWiseMarks: {}
+                };
+        
+                // Iterate through subjects and safely get values
+                for (const subjectName in this.results.subjectWise) {
+                    const subjectData = this.results.subjectWise[subjectName];
+                    if (subjectData) {
+                        testAttemptData.subjectWiseMarks[subjectName] = {
+                            correct: subjectData.correct || 0,
+                            incorrect: subjectData.incorrect || 0,
+                            total: subjectData.total || 0, 
+                        };
+                    }
+                }
+        
+                // Use the sanitized email as the Document ID in the 'user_summaries' collection
+                const userDocRef = doc(db, `user_summaries`, sanitizedEmail);
+        
+                try {
+                    // Check if the document exists
+                    const userDocSnap = await getDoc(userDocRef);
+        
+                    if (userDocSnap.exists()) {
+                        // Document exists, append the new test result to the 'tests' array
+                        await updateDoc(userDocRef, {
+                            tests: arrayUnion(testAttemptData),
+                            // Use serverTimestamp() at the root level for last updated time
+                            lastUpdated: serverTimestamp() 
+                        });
+                        console.log(`Test result appended successfully for user ${userEmail}.`);
+                    } else {
+                        // Document does not exist, create it with the initial structure
+                        await setDoc(userDocRef, {
+                            useremail: userEmail,
+                            userId: this.user.uid, 
+                            tests: [testAttemptData],
+                            // Use serverTimestamp() at the root level for creation and update time
+                            createdAt: serverTimestamp(), 
+                            lastUpdated: serverTimestamp() 
+                        });
+                        console.log(`New summary document created successfully for user ${userEmail}.`);
+                    }
+                    
+                    // Clean up session storage after successful save
+                    sessionStorage.removeItem('test_results');
+        
+                } catch (e) {
+                    console.error("Error saving summary results to Firestore: ", e);
+                }
+            }
+        
+            renderPage() {
+                this.renderSummary();
+                this.renderSubjectBreakdown();
+                this.renderTimeAnalysis();
+                this.renderAnswerReview();
+                this.setupFilters();
+        
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('results-content').style.display = 'block';
+
+                // Automatically trigger the download after the page is fully rendered
+                this.downloadResultsAsHtml();
+            }
+        
+            renderSummary() {
+                const attempted = this.results.correct + this.results.incorrect;
+                const accuracy = attempted > 0 ? ((this.results.correct / attempted) * 100).toFixed(1) : 0;
+        
+                document.getElementById('test-name').textContent = this.results.testData.title;
+                document.getElementById('final-score').textContent = `${this.results.finalScore} / ${this.results.testData.marks}`;
+                document.getElementById('stat-correct').textContent = this.results.correct;
+                document.getElementById('stat-incorrect').textContent = this.results.incorrect;
+                document.getElementById('stat-unanswered').textContent = this.results.unanswered;
+                document.getElementById('stat-accuracy').textContent = `${accuracy}%`;
+            }
+        
+            renderSubjectBreakdown() {
+                const container = document.getElementById('subject-container');
+                container.innerHTML = '';
+                const subjects = this.results.subjectWise;
+                for (const subjectName in subjects) {
+                    const data = subjects[subjectName];
+                    if (!data) continue;
+                    
+                    const attempted = data.correct + data.incorrect;
+                    const totalQuestions = data.total > 0 ? data.total : 1; 
+                    const accuracy = attempted > 0 ? ((data.correct / attempted) * 100) : 0;
+                    
+                    container.innerHTML += `
+                        <div class="subject-item">
+                            <div class="subject-header">
+                                <span>${subjectName}</span>
+                                <span>${accuracy.toFixed(1)}% Acc</span>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: ${accuracy}%"></div></div>
+                        </div>`;
+                }
+            }
             
-            if (filter !== 'all' && filter !== status) return;
-            
-            let optionsHtml = '';
-            if (isFillInTheBlanks) {
-                optionsHtml = `
-                    <div class="review-blank-answer">
-                        <p>Your Answer: <span class="${status}">${userAnswer !== undefined ? userAnswer : 'N/A'}</span></p>
-                        <p>Correct Answer: <span class="correct">${q.correctAnswer}</span></p>
-                    </div>
+            renderTimeAnalysis() {
+                const container = document.getElementById('time-container');
+                const timeTaken = this.results.timeTaken || 0;
+                const attemptedCount = this.results.correct + this.results.incorrect;
+                const avgTime = attemptedCount > 0 ? (timeTaken / attemptedCount).toFixed(0) : 0;
+                const formatTime = (s) => `${Math.floor(s/60)}m ${s%60}s`;
+        
+                container.innerHTML = `
+                    <div class="time-item"><span class="time-label">Time Taken</span><span class="time-value">${formatTime(timeTaken)}</span></div>
+                    <div class="time-item"><span class="time-label">Total Time</span><span class="time-value">${this.results.testData.duration}m 0s</span></div>
+                    <div class="time-item"><span class="time-label">Avg. Time/Ques</span><span class="time-value">${avgTime}s</span></div>
                 `;
-            } else {
-                optionsHtml = q.options.map((option, optIndex) => `
-                    <div class="option 
-                        ${optIndex === q.correctAnswer ? 'correct-answer' : ''}
-                        ${optIndex === userAnswer && !isCorrect ? 'incorrect-choice' : ''}
-                    ">
-                        <span class="option-label">${String.fromCharCode(65 + optIndex)}.</span>
-                        <span>${option}</span>
-                    </div>
-                `).join('');
             }
-
-            let solutionHtml = '';
-            let formattedSolution = q.solution || 'No detailed solution available.';
-            const steps = formattedSolution.replace(/Solution: /g, '').split(/<br\s*\/?>/i);
-            
-            if (steps.length > 1) {
-                const conclusion = steps.pop();
-                solutionHtml = `<ol>${steps.map(step => `<li>${step.trim()}</li>`).join('')}</ol><p class="conclusion">${conclusion.trim()}</p>`;
-            } else {
-                solutionHtml = `<p>${formattedSolution}</p>`;
-            }
-            
-            let questionImageHtml = q.questionImageUrl 
-                ? `<img src="${q.questionImageUrl}" alt="Question Image" class="review-image" onerror="this.style.display='none'">` 
-                : '';
-
-            container.innerHTML += `
-                <div class="review-question" data-status="${status}">
-                    <div class="review-question-header">
-                        <span><b>Q${index + 1}:</b> (${q.subject})</span>
-                        <div>
-                            <span class="review-question-topic">${q.topic || 'General'}</span>
-                            <span class="status-tag status-${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+        
+            renderAnswerReview(filter = 'all') {
+                const container = document.getElementById('review-container');
+                container.innerHTML = '';
+                
+                this.results.testData.questions_data.forEach((q, index) => {
+                    const userAnswer = this.results.answers[index];
+                    const isFillInTheBlanks = q.options.length === 1 && q.options[0] === 'nil';
+        
+                    let isCorrect = false;
+                    if (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') {
+                         if (isFillInTheBlanks) {
+                            // Assuming q.correctAnswer for fill-in is a string number
+                            isCorrect = parseFloat(userAnswer) === parseFloat(q.correctAnswer);
+                        } else {
+                            // For MCQ, q.correctAnswer is the index
+                            isCorrect = userAnswer === q.correctAnswer;
+                        }
+                    }
+                    
+                    let status = (userAnswer !== undefined && userAnswer !== null && userAnswer !== '') ? (isCorrect ? 'correct' : 'incorrect') : 'unanswered';
+                    
+                    if (filter !== 'all' && filter !== status) return;
+                    
+                    let optionsHtml = '';
+                    if (isFillInTheBlanks) {
+                        optionsHtml = `
+                            <div class="review-blank-answer">
+                                <p>Your Answer: <span class="${status}">${userAnswer !== undefined ? userAnswer : 'N/A'}</span></p>
+                                <p>Correct Answer: <span class="correct">${q.correctAnswer}</span></p>
+                            </div>
+                        `;
+                    } else {
+                        optionsHtml = q.options.map((option, optIndex) => {
+                            // Render option text with KaTeX/LaTeX support
+                            const renderedOption = this.renderLatex(option);
+                            return `
+                            <div class="option 
+                                ${optIndex === q.correctAnswer ? 'correct-answer' : ''}
+                                ${optIndex === userAnswer && !isCorrect ? 'incorrect-choice' : ''}
+                            ">
+                                <span class="option-label">${String.fromCharCode(65 + optIndex)}.</span>
+                                <span>${renderedOption}</span>
+                            </div>
+                            `;
+                        }).join('');
+                    }
+        
+                    let solutionHtml = '';
+                    let formattedSolution = q.solution || 'No detailed solution available.';
+                    // Render solution text with KaTeX/LaTeX support
+                    formattedSolution = this.renderLatex(formattedSolution);
+                    
+                    // Convert HTML breaks for list formatting
+                    const steps = formattedSolution.replace(/Solution: /g, '').split(/<br\s*\/?>/i);
+                    
+                    if (steps.length > 1) {
+                        // Heuristically assume the last line is a conclusion/final answer if steps exist
+                        const conclusion = steps.pop();
+                        solutionHtml = `<ol>${steps.map(step => `<li>${step.trim()}</li>`).join('')}</ol><p class="conclusion">${conclusion.trim()}</p>`;
+                    } else {
+                        solutionHtml = `<p>${formattedSolution}</p>`;
+                    }
+                    
+                    let questionImageHtml = q.questionImageUrl 
+                        ? `<img src="${q.questionImageUrl}" alt="Question Image" class="review-image" onerror="this.style.display='none'">` 
+                        : '';
+        
+                    // Render question text with KaTeX/LaTeX support
+                    const renderedQuestion = this.renderLatex(q.questionText);
+        
+                    container.innerHTML += `
+                        <div class="review-question" data-status="${status}">
+                            <div class="review-question-header">
+                                <span>Q${index + 1}</span>
+                                <span class="review-question-topic">${q.topic || 'General'}</span>
+                                <span class="status-tag status-${status}">
+                                    ${status === 'correct' ? 'Correct' : status === 'incorrect' ? 'Incorrect' : 'Unanswered'}
+                                </span>
+                            </div>
+                            <div class="review-question-text">${renderedQuestion}</div>
+                            ${questionImageHtml}
+                            <div class="review-options">${optionsHtml}</div>
+                            <div class="solution">
+                                <h4>Solution:</h4>
+                                ${solutionHtml}
+                            </div>
                         </div>
-                    </div>
-                    <p>${q.questionText}</p>
-                    ${questionImageHtml}
-                    <div class="review-options">
-                        ${optionsHtml}
-                    </div>
-                    <div class="solution">
-                        <h4>Solution:</h4>
-                        ${solutionHtml}
-                    </div>
-                </div>
-            `;
-        });
-    }
-    
-    setupFilters() {
-        const filterContainer = document.getElementById('question-filter');
-        filterContainer.addEventListener('click', (e) => {
-            if (e.target.tagName === 'BUTTON') {
-                filterContainer.querySelector('.active').classList.remove('active');
-                e.target.classList.add('active');
-                   this.renderAnswerReview(e.target.dataset.filter);
+                    `;
+                });
             }
+        
+            setupFilters() {
+                const filterBtns = document.querySelectorAll('.filter-btn');
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        filterBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.renderAnswerReview(btn.dataset.filter);
+                    });
+                });
+            }
+        }
+        
+        // Initialize the detailed results page when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new DetailedResultsPage();
         });
-    }
-}
-
-new DetailedResultsPage();
-</script>
+    </script>
 </body>
 </html>
