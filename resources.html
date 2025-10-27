@@ -124,7 +124,6 @@
         }
 
         .download-link {
-            /* Replaced <li><a> with .download-link class on the <a> element */
             color: var(--foreground);
             text-decoration: none;
             font-weight: 500;
@@ -142,31 +141,7 @@
             background-color: #e5e7eb;
         }
 
-        /* Style for locked items */
-        .download-link.locked {
-            background-color: #fee2e2; /* Light red */
-            color: #b91c1c; /* Dark red text */
-            cursor: pointer; /* Still clickable to show alert */
-            font-weight: 600;
-            border: 1px solid #fca5a5;
-            position: relative;
-        }
-
-        .download-link.locked svg {
-            color: #b91c1c; /* Red icon */
-        }
-
-        .download-link.locked::after {
-            content: "🔒 Pro";
-            position: absolute;
-            right: 10px;
-            padding: 0.1rem 0.5rem;
-            font-size: 0.75rem;
-            background-color: #b91c1c;
-            color: white;
-            border-radius: 9999px;
-        }
-        
+        /* All items are now free, keeping only the free style for visual appeal */
         .download-link.free {
              background-color: #d1fae5; /* Light green */
              color: #065f46; /* Dark green text */
@@ -184,38 +159,11 @@
             background-color: #dc2626;
         }
 
-        /* Modal/Message Box Styling (instead of alert()) */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background-color: rgba(0, 0, 0, 0.6); display: none; 
-            align-items: center; justify-content: center; z-index: 200;
-        }
-        .modal-box {
-            background-color: var(--card); padding: 2rem; border-radius: 0.75rem; 
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); max-width: 400px; width: 90%; 
-            text-align: center;
-        }
-        .modal-icon { color: var(--warning); font-size: 2rem; margin-bottom: 1rem; }
-        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--foreground); margin-bottom: 0.5rem; }
-        .modal-message { color: var(--muted-foreground); margin-bottom: 1.5rem; }
-        .modal-close-btn { 
-            background-color: var(--primary); color: var(--primary-foreground); 
-            padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; 
-            font-weight: 600; cursor: pointer; transition: background-color 0.2s; 
-        }
-        .modal-close-btn:hover { background-color: #166534; }
+        /* Removed modal styles as there is no subscription gating */
     </style>
 </head>
 <body>
-    <!-- Message Box Modal -->
-    <div id="subscription-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-icon">⚠️</div>
-            <h3 class="modal-title">Subscription Required</h3>
-            <p class="modal-message">This feature, including past year papers from 2021-2024, is available exclusively to our **Subscribed Members**. Upgrade your plan to unlock all resources!</p>
-            <button id="modal-close-btn" class="modal-close-btn">Got It!</button>
-        </div>
-    </div>
+    <!-- Message Box Modal - REMOVED -->
     
     <!-- Navigation Bar -->
     <nav class="navbar">
@@ -254,7 +202,7 @@
     <main class="main-container">
         <header class="page-header">
             <h1 class="page-title">Download Previous Year Question Papers (PYQs)</h1>
-            <p class="page-subtitle">Instantly download PDF files for major entrance exams. **2025 Papers are Free!**</p>
+            <p class="page-subtitle">Instantly download PDF files for major entrance exams. All papers are now available free of cost!</p>
         </header>
         <section class="resources-grid">
             <!-- JEE Card -->
@@ -304,7 +252,6 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         
         // --- START OF CONFIGURATION ---
-        // Placeholder Firebase Configuration 
         const firebaseConfig = {
           apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
           authDomain: "testseries-38752.firebaseapp.com",
@@ -315,28 +262,28 @@
         };
       
         // Data structure containing the actual, working Google Drive URLs and filenames
+        // All files are now set to 'free: true'
         const files = {
-            // Note: The structure includes a 'free' flag to control access
             jee: [
-                { name: 'JEE 2021', url: 'https://drive.google.com/uc?export=download&id=1sORTAB2GPG7Bg05jRJTFv3fpmGhyM5-a', filename: 'JEE_21.pdf', free: false },
-                { name: 'JEE 2022', url: 'https://drive.google.com/uc?export=download&id=1nghtYMVB-zpFEJR1uXz43srZMavTO0IF', filename: 'JEE_22.pdf', free: false },
-                { name: 'JEE 2023', url: 'https://drive.google.com/uc?export=download&id=1KGAbYnwERKpxTGCL2cDXpCiIbw34p22P', filename: 'JEE_23.pdf', free: false },
-                { name: 'JEE 2024', url: 'https://drive.google.com/uc?export=download&id=1AQ5VutPbebW4niu9bIF8SJ4jadxfPoZs', filename: 'JEE_24.pdf', free: false },
+                { name: 'JEE 2021', url: 'https://drive.google.com/uc?export=download&id=1sORTAB2GPG7Bg05jRJTFv3fpmGhyM5-a', filename: 'JEE_21.pdf', free: true },
+                { name: 'JEE 2022', url: 'https://drive.google.com/uc?export=download&id=1nghtYMVB-zpFEJR1uXz43srZMavTO0IF', filename: 'JEE_22.pdf', free: true },
+                { name: 'JEE 2023', url: 'https://drive.google.com/uc?export=download&id=1KGAbYnwERKpxTGCL2cDXpCiIbw34p22P', filename: 'JEE_23.pdf', free: true },
+                { name: 'JEE 2024', url: 'https://drive.google.com/uc?export=download&id=1AQ5VutPbebW4niu9bIF8SJ4jadxfPoZs', filename: 'JEE_24.pdf', free: true },
                 { name: 'JEE 2025', url: 'https://drive.google.com/uc?export=download&id=19dsTM1Q5oE3OnDqkdEHVcui3mBDIUp5U', filename: 'JEE_25.pdf', free: true },
             ],
             neet: [
-                { name: 'NEET 2021', url: 'https://drive.google.com/uc?export=download&id=1yfNoNXKkagsUfmI3K4xpsRR_EmHfpy9X', filename: 'NEET_2021.pdf', free: false },
-                { name: 'NEET 2022', url: 'https://drive.google.com/uc?export=download&id=1-fsauQHRVNAJEMmf-EDrlcsRtBD96ykV', filename: 'NEET_2022.pdf', free: false },
-                { name: 'NEET 2023', url: 'https://drive.google.com/uc?export=download&id=1Fml64e8bYQeROzG5FgXjAcXwor9XIWFd', filename: 'NEET_2023.pdf', free: false },
-                { name: 'NEET 2024', url: 'https://drive.google.com/uc?export=download&id=1MyOpRmmTaGEfg9ca_l-zrP_Z3Au6skaC', filename: 'NEET_2024.pdf', free: false },
+                { name: 'NEET 2021', url: 'https://drive.google.com/uc?export=download&id=1yfNoNXKkagsUfmI3K4xpsRR_EmHfpy9X', filename: 'NEET_2021.pdf', free: true },
+                { name: 'NEET 2022', url: 'https://drive.google.com/uc?export=download&id=1-fsauQHRVNAJEMmf-EDrlcsRtBD96ykV', filename: 'NEET_2022.pdf', free: true },
+                { name: 'NEET 2023', url: 'https://drive.google.com/uc?export=download&id=1Fml64e8bYQeROzG5FgXjAcXwor9XIWFd', filename: 'NEET_2023.pdf', free: true },
+                { name: 'NEET 2024', url: 'https://drive.google.com/uc?export=download&id=1MyOpRmmTaGEfg9ca_l-zrP_Z3Au6skaC', filename: 'NEET_2024.pdf', free: true },
                 { name: 'NEET 2025', url: 'https://drive.google.com/uc?export=download&id=1U0Rf7fgAu3viGhiJZydYR8muQUsLaBDJ', filename: 'NEET_2025.pdf', free: true },
             ],
             kcet: [
-                { name: 'KCET 2020', url: 'https://drive.google.com/uc?export=download&id=1pJDyVj_S0_wg5nt0Cb277eZcS5rQNDSg', filename: 'KCET_2020.pdf', free: false },
-                { name: 'KCET 2021', url: 'https://drive.google.com/uc?export=download&id=1SjufYpdsKBvpKJZwAZTXgRnkt4L4kY2M', filename: 'KCET_2021.pdf', free: false },
-                { name: 'KCET 2022', url: 'https://drive.google.com/uc?export=download&id=1JSKKcpoH5x9hRo6gmmragzDbSDe7mkK6', filename: 'KCET_2022.pdf', free: false },
-                { name: 'KCET 2023', url: 'https://drive.google.com/uc?export=download&id=1dCwYYzQdDVkJvnZMvQe93DwfJ7geZnkE', filename: 'KCET_2023.pdf', free: false },
-                { name: 'KCET 2024', url: 'https://drive.google.com/uc?export=download&id=19ublZdui6e3RRG70UEWyPZUApdY2RhhJ', filename: 'KCET_2024.pdf', free: false },
+                { name: 'KCET 2020', url: 'https://drive.google.com/uc?export=download&id=1pJDyVj_S0_wg5nt0Cb277eZcS5rQNDSg', filename: 'KCET_2020.pdf', free: true },
+                { name: 'KCET 2021', url: 'https://drive.google.com/uc?export=download&id=1SjufYpdsKBvpKJZwAZTXgRnkt4L4kY2M', filename: 'KCET_2021.pdf', free: true },
+                { name: 'KCET 2022', url: 'https://drive.google.com/uc?export=download&id=1JSKKcpoH5x9hRo6gmmragzDbSDe7mkK6', filename: 'KCET_2022.pdf', free: true },
+                { name: 'KCET 2023', url: 'https://drive.google.com/uc?export=download&id=1dCwYYzQdDVkJvnZMvQe93DwfJ7geZnkE', filename: 'KCET_2023.pdf', free: true },
+                { name: 'KCET 2024', url: 'https://drive.google.com/uc?export=download&id=19ublZdui6e3RRG70UEWyPZUApdY2RhhJ', filename: 'KCET_2024.pdf', free: true },
                 { name: 'KCET 2025', url: 'https://drive.google.com/uc?export=download&id=1XI_l-cEfUv-diDPZuVeyZKctFquaUBKH', filename: 'KCET_2025.pdf', free: true }
             ]
         };
@@ -352,7 +299,7 @@
                 const userName = user.displayName || user.email || 'User';
                 document.getElementById('user-avatar').textContent = userName.charAt(0).toUpperCase();
             } else {
-                console.log("User not authenticated. Assuming public access for resource page demo.");
+                console.log("User not authenticated. Assuming public access.");
             }
         });
         
@@ -371,15 +318,10 @@
             document.getElementById('mobile-menu').classList.toggle('active');
         });
 
-        document.getElementById('modal-close-btn').addEventListener('click', () => {
-            document.getElementById('subscription-modal').style.display = 'none';
-        });
-
         // --- Resource List Logic ---
 
         /**
          * Populates the download list with links using the provided file objects.
-         * Adds subscription gating logic.
          */
         function populateList(examType, listElement) {
             listElement.innerHTML = '';
@@ -390,21 +332,11 @@
                 const listItem = document.createElement('li');
                 const link = document.createElement('a');
                 
-                // If free: set attributes for immediate download
-                if (file.free) {
-                    link.href = file.url;
-                    link.download = file.filename;
-                    link.target = "_blank"; 
-                    link.classList.add('download-link', 'free');
-                } else {
-                    // If locked: prevent default action and show modal
-                    link.href = "#"; // Prevent navigation
-                    link.classList.add('download-link', 'locked');
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        document.getElementById('subscription-modal').style.display = 'flex';
-                    });
-                }
+                // All files are free now: set attributes for immediate download
+                link.href = file.url;
+                link.download = file.filename;
+                link.target = "_blank"; 
+                link.classList.add('download-link', 'free');
                 
                 // Download icon SVG for visual clarity
                 const downloadIcon = `

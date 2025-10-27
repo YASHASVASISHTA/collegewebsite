@@ -126,7 +126,7 @@
         .test-card { background-color: var(--card); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1.5rem; display: flex; flex-direction: column; transition: all 0.2s; position: relative; }
         .test-card:hover { transform: translateY(-4px); box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08); }
         
-        /* Style for locked tests */
+        /* Style for locked tests - KEPT FOR FUTURE USE, BUT WON'T SHOW NOW */
         .test-card.locked {
             background-color: #fef2f2; /* Light red */
             border-color: #fca5a5;
@@ -194,7 +194,7 @@
     </style>
 </head>
 <body>
-    <!-- Message Box Modal -->
+    <!-- Message Box Modal (Kept, but only triggered by manual logic) -->
     <div id="subscription-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-icon">⚠️</div>
@@ -229,7 +229,7 @@
                 <li><a href="resources.html" class="nav-link">Resources</a></li>
                 <li><a href="tips.html" class="nav-link">Tips & Revision</a></li>
                           <li><a href="info.html" class="nav-link">Exam Info</a></li>
-                <li><a href="login.html" id="mobile-logout-btn" class="nav-link">Logout</a></li>
+                <li><a href="#" id="mobile-logout-btn" class="nav-link">Logout</a></li>
             </ul>
         </div>
     </nav>
@@ -308,7 +308,6 @@
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         // IMPORTANT: The following is mock data for Firebase configuration.
-        // In a real Canvas environment, these would be loaded from global variables.
         const firebaseConfig = {
           apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
           authDomain: "testseries-38752.firebaseapp.com",
@@ -326,7 +325,7 @@
             constructor() {
                 this.allTests = [];
                 this.filteredTests = [];
-                this.searchQuery = ''; // NEW: State to hold search term
+                this.searchQuery = ''; // State to hold search term
                 this.stateContainer = document.getElementById('state-container');
                 this.testGrid = document.getElementById('test-grid');
                 this.modal = document.getElementById('subscription-modal');
@@ -373,15 +372,17 @@
                     const docSnap = await getDoc(allTestsDocRef);
 
                     if (docSnap.exists()) {
-                        this.allTests = docSnap.data().tests || [];
+                        let tests = docSnap.data().tests || [];
                         
-                        // FIX: Check for the 'available' field and ensure it is a boolean
-                        this.allTests = this.allTests.map((test, index) => ({
+                        tests = tests.map((test, index) => ({
                             ...test,
                             // 'available' will be true/false as per the database, or false if not present
                             isAvailable: !!test.available, 
                             originalIndex: index, // Retain original index for stable sorting
                         }));
+                        
+                        // NEW LOGIC: Filter out tests where available is false right at the source
+                        this.allTests = tests.filter(test => test.isAvailable === true);
 
                         this.applyFilters();
                     } else {
@@ -401,7 +402,7 @@
                 document.getElementById('type-filter').addEventListener('change', () => this.applyFilters()); 
                 document.getElementById('duration-filter').addEventListener('change', () => this.applyFilters());
                 
-                // NEW: Search Input Listener (using keyup for real-time filtering)
+                // Search Input Listener (using keyup for real-time filtering)
                 document.getElementById('search-input').addEventListener('keyup', (e) => {
                     this.searchQuery = e.target.value.toLowerCase();
                     this.applyFilters();
@@ -467,16 +468,9 @@
                     return examMatch && subjectMatch && typeMatch && durationMatch;
                 });
                 
-                // 3. Apply custom sorting to put available tests (isAvailable: true) first
-                filtered.sort((a, b) => {
-                    // Primary Sort: Available tests first (descending sort on isAvailable)
-                    if (a.isAvailable !== b.isAvailable) {
-                        return b.isAvailable - a.isAvailable;
-                    }
-
-                    // Secondary Sort: If status is the same, use original index for stability
-                    return a.originalIndex - b.originalIndex;
-                });
+                // 3. No need for secondary sort since we filtered out unavailable tests in fetchTests
+                // We keep the stable sort using the originalIndex
+                filtered.sort((a, b) => a.originalIndex - b.originalIndex);
 
                 this.filteredTests = filtered;
                 this.renderTests();
@@ -491,13 +485,11 @@
                 
                 this.stateContainer.style.display = 'none';
                 this.testGrid.innerHTML = this.filteredTests.map((test) => {
-                    // Use the database-driven 'isAvailable' status
-                    const isAvailable = test.isAvailable;
-                    
-                    // Determine visual indicators
-                    const lockClass = isAvailable ? '' : 'locked';
-                    const buttonText = isAvailable ? 'Start Test' : 'Upgrade to Premium';
-                    const buttonClass = isAvailable ? 'btn-primary' : 'btn-primary locked-btn';
+                    // Since all tests here are available, we can simplify this block
+                    const isAvailable = true;
+                    const lockClass = ''; // Always available, so no lock class
+                    const buttonText = 'Start Test';
+                    const buttonClass = 'btn-primary';
                     
                     let typeIndicator = '';
                     if (test.C === true) {
@@ -522,7 +514,7 @@
                                     <span>🎯 ${test.marks} Marks</span>
                                     <span>⚠️ -${test.negativeMarks} Negative</span>
                                 </div>
-                                <button class="${buttonClass}" data-testid="${test.id}" data-isavailable="${isAvailable ? 'true' : 'false'}">${buttonText}</button>
+                                <button class="${buttonClass}" data-testid="${test.id}" data-isavailable="true">${buttonText}</button>
                             </div>
                         </div>
                     `;
@@ -535,11 +527,13 @@
                 
                 this.testGrid.addEventListener('click', e => {
                     if (e.target.tagName === 'BUTTON' && e.target.dataset.testid) {
+                        // Since all rendered tests are available, we just start the test.
+                        // We check the dataset just in case, though it should always be 'true' now.
                         const isAvailable = e.target.dataset.isavailable === 'true';
                         if (isAvailable) {
                             this.startTest(e.target.dataset.testid, e.target);
                         } else {
-                            // Locked test: Show the subscription modal
+                            // This should never happen now, but is a safe fallback
                             this.modal.style.display = 'flex';
                         }
                     }

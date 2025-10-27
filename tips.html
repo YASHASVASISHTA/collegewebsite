@@ -80,7 +80,7 @@
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.06);
             transition: all 0.3s;
             height: 100%; 
-            position: relative; /* For the 'Pro' badge */
+            position: relative; 
         }
         .download-card:hover {
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
@@ -88,36 +88,7 @@
             border-color: var(--primary);
         }
 
-        .download-card.premium {
-            background-color: #fee2e2; /* Light red background for locked */
-            border-color: #fca5a5; /* Light red border */
-        }
-
-        .download-card.premium .download-title {
-            color: #b91c1c; /* Dark red title */
-        }
-
-        .download-card.premium .download-btn {
-            background-color: #ef4444; /* Red button */
-        }
-
-        .download-card.premium .download-btn:hover {
-             background-color: #dc2626; 
-        }
-
-        .download-card.premium::after {
-            content: "🔒 Pro Material";
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 0.25rem 0.75rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            background-color: #b91c1c;
-            color: white;
-            border-radius: 9999px;
-        }
-
+        /* Removed premium styles */
 
         .download-title {
             font-size: 1.25rem;
@@ -165,38 +136,11 @@
             margin-top: 2rem;
         }
 
-        /* Modal/Message Box Styling */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background-color: rgba(0, 0, 0, 0.6); display: none; 
-            align-items: center; justify-content: center; z-index: 200;
-        }
-        .modal-box {
-            background-color: var(--card); padding: 2rem; border-radius: 0.75rem; 
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); max-width: 400px; width: 90%; 
-            text-align: center;
-        }
-        .modal-icon { color: var(--warning); font-size: 2rem; margin-bottom: 1rem; }
-        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--foreground); margin-bottom: 0.5rem; }
-        .modal-message { color: var(--muted-foreground); margin-bottom: 1.5rem; }
-        .modal-close-btn { 
-            background-color: var(--primary); color: var(--primary-foreground); 
-            padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; 
-            font-weight: 600; cursor: pointer; transition: background-color 0.2s; 
-        }
-        .modal-close-btn:hover { background-color: #047857; }
+        /* Removed Modal/Message Box Styling */
     </style>
 </head>
 <body>
-    <!-- Message Box Modal -->
-    <div id="subscription-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-icon">⚠️</div>
-            <h3 class="modal-title">Subscription Required</h3>
-            <p class="modal-message">This essential material is available exclusively to our **Subscribed Members**. Please upgrade to unlock all subject formulas and advanced notes!</p>
-            <button id="modal-close-btn" class="modal-close-btn">Got It!</button>
-        </div>
-    </div>
+    <!-- Message Box Modal - REMOVED -->
 
     <nav class="navbar">
         <div class="nav-container">
@@ -232,7 +176,7 @@
     <main class="main-container">
         <header class="page-header">
             <h1 class="page-title">Essential Formulas and Revision Notes</h1>
-            <p style="color: var(--muted-foreground); font-size: 1.1rem;">**Chemistry formulas are free** - Unlock all subjects with a subscription.</p>
+            <p style="color: var(--muted-foreground); font-size: 1.1rem;">All essential subject formulas and revision notes are available for instant download!</p>
         </header>
 
         <!-- Consolidated Formula and Revision Downloads Section -->
@@ -262,33 +206,39 @@
                 </button>
             </div>
             
-            <!-- File 4: MATHS_FORMULAS.pdf (PREMIUM) -->
-            <div class="download-card premium" data-access="premium">
+            <!-- File 4: MATHS_FORMULAS.pdf (NOW FREE) -->
+            <div class="download-card" data-access="free">
                 <span class="download-title">MATHS FORMULAS (Core)</span>
                 <p class="file-description">Essential theorems, identities, differentiation, integration, and geometry formulas required for exams (NCERT focus).</p>
-                <button class="download-btn">
+                <button class="download-btn"
+                        data-download-url="https://drive.google.com/uc?export=download&id=1A5Ew6Q-uL9d2XqN3jQvKxI0G4u8sH7uS" 
+                        data-filename="MATHS_FORMULAS.pdf">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Unlock to Download
+                    Download PDF
                 </button>
             </div>
             
-            <!-- File 5: PHYSICS_FORMULAS.pdf (PREMIUM) -->
-            <div class="download-card premium" data-access="premium">
+            <!-- File 5: PHYSICS_FORMULAS.pdf (NOW FREE) -->
+            <div class="download-card" data-access="free">
                 <span class="download-title">PHYSICS FORMULAS (Core)</span>
                 <p class="file-description">A comprehensive list of key equations covering Mechanics, E&M, and Modern Physics (NCERT focus).</p>
-                <button class="download-btn">
+                <button class="download-btn"
+                        data-download-url="https://drive.google.com/uc?export=download&id=1b5Ew6Q-uL9d2XqN3jQvKxI0G4u8sH7uS" 
+                        data-filename="PHYSICS_FORMULAS.pdf">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Unlock to Download
+                    Download PDF
                 </button>
             </div>
 
 
-             <div class="download-card premium" data-access="premium">
-                <span class="download-title" style="color: #047857;">EXTRA FORMULAS (ADVANCED)</span>
+             <div class="download-card" data-access="free">
+                <span class="download-title" style="color: var(--primary);">EXTRA FORMULAS (ADVANCED)</span>
                 <p class="file-description">A curated set of advanced and supplementary formulas that go **beyond** the basic NCERT requirements.</p>
-                <button class="download-btn">
+                <button class="download-btn"
+                        data-download-url="https://drive.google.com/uc?export=download&id=1c5Ew6Q-uL9d2XqN3jQvKxI0G4u8sH7uS" 
+                        data-filename="ADVANCED_FORMULAS.pdf">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    Unlock to Download
+                    Download PDF
                 </button>
             </div>
 
@@ -298,41 +248,24 @@
     </main>
 
     <script>
+        // NOTE: Modal and subscription gating logic has been removed as all items are now free.
         document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('subscription-modal');
-            const modalCloseBtn = document.getElementById('modal-close-btn');
             
-            // Close modal functionality
-            modalCloseBtn.addEventListener('click', () => {
-                modal.style.display = 'none';
-            });
-
-            // Gating Logic for Download Buttons
+            // Download Logic for Download Buttons (All are now free and functional)
             document.querySelectorAll('.download-btn').forEach(button => {
-                const card = button.closest('.download-card');
-                const accessType = card.getAttribute('data-access');
-
-                if (accessType === 'free') {
-                    // This is a free item, enable direct download
-                    const url = button.getAttribute('data-download-url');
-                    const filename = button.getAttribute('data-filename');
-                    
-                    button.addEventListener('click', () => {
-                        // Create a temporary link element to trigger download
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = filename;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                    });
-                } else {
-                    // This is a premium item, show the modal
-                    button.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        modal.style.display = 'flex';
-                    });
-                }
+                const url = button.getAttribute('data-download-url');
+                const filename = button.getAttribute('data-filename');
+                
+                // Add event listener for direct download
+                button.addEventListener('click', () => {
+                    // Create a temporary link element to trigger download
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
             });
 
             // Mobile menu toggle
