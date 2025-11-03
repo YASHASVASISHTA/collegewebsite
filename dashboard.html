@@ -96,18 +96,18 @@
             text-decoration: none;
             font-weight: 500;
             transition: color 0.2s;
-            padding: 0 0.2rem; /* Added padding for link hover area */
-            line-height: 2; /* Ensure spacing in mobile menu */
+            padding: 0 0.2rem;
+            line-height: 2;
         }
 
         .nav-link:hover,
         .nav-link.active {
             color: var(--primary);
-            border-bottom: 3px solid var(--primary); /* Added visual indicator for active/hover */
+            border-bottom: 3px solid var(--primary);
         }
         
         .mobile-nav-links .nav-link {
-            border-bottom: none; /* Remove desktop underline in mobile menu */
+            border-bottom: none;
             padding: 0.5rem 0;
             display: block;
         }
@@ -172,8 +172,8 @@
             color: var(--muted-foreground);
             font-size: 1.125rem;
         }
-
-        /* Card styles */
+        
+        /* Card styles (kept for reference, although only used for info cards now) */
         .card {
             background-color: var(--card);
             border: 1px solid var(--border);
@@ -187,33 +187,13 @@
             margin-bottom: 1rem;
         }
 
-        /* Test list styles */
-        .test-list { list-style: none; }
-        .test-item {
-            display: grid;
-            grid-template-columns: 1fr auto; /* Adjusted for button on the right */
-            align-items: center;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            border: 1px solid var(--border);
-        }
-        .test-item:last-child { margin-bottom: 0; }
-        
-        .test-info h4 { font-weight: 600; font-size: 1.125rem; }
-        .test-meta { color: var(--muted-foreground); font-size: 0.875rem; display: flex; gap: 1rem; }
-        
-        .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.375rem; font-weight: 500; cursor: pointer; text-decoration: none; text-align: center; transition: all 0.2s; }
-        .btn-primary { background-color: var(--primary); color: var(--primary-foreground); }
-        .btn-primary:hover { background-color: #166534; }
-        
-        /* New informational sections */
+        /* Informational sections */
         .info-grid {
             display: grid;
-            /* Changed to fit max 3 cards now that the progress one is removed */
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+            /* Now using 4 cards, keeping the grid template dynamic */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
             gap: 2rem;
-            margin-top: 2rem;
+            margin-top: 0; /* Adjusted since it's the main element now */
         }
 
         .info-card {
@@ -221,6 +201,14 @@
             border: 1px solid var(--border);
             border-radius: 0.75rem;
             padding: 1.5rem;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .info-card:hover {
+             transform: translateY(-5px);
+             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         .info-card h3 {
             font-size: 1.25rem;
@@ -231,6 +219,7 @@
         .info-card p {
             color: var(--muted-foreground);
             margin-bottom: 1rem;
+            flex-grow: 1; /* Allows paragraph to fill space */
         }
         .info-card a {
             color: var(--primary);
@@ -243,15 +232,13 @@
         
         /* Responsive design */
         @media (max-width: 992px) {
-             /* Hide desktop links and user info in tablet/mobile */
+            /* Hide desktop links and user info in tablet/mobile */
             .nav-links, .nav-user { display: none; }
             /* Show mobile menu button */
             .mobile-menu-btn { display: block; }
             
             /* General content adjustments */
             .welcome-title { font-size: 1.75rem; }
-            .test-item { grid-template-columns: 1fr; gap: 0.75rem; }
-            .test-item .btn { width: 100%; }
             .info-grid { grid-template-columns: 1fr; }
         }
         @media (min-width: 993px) {
@@ -275,8 +262,8 @@
             </ul>
             <!-- Desktop User/Logout -->
             <div class="nav-user">
+                <!-- Avatar is now static, set to 'U' -->
                 <div class="user-avatar" id="user-avatar">U</div>
-                <!-- Logout is now a separate element for unified mobile/desktop handling -->
                 <a href="#" id="logout-btn" class="nav-link" style="border-bottom: none;">Logout</a>
             </div>
             <!-- Mobile Menu Toggle -->
@@ -302,83 +289,33 @@
 
         <div id="dashboard-content" style="display:none;">
             <section class="welcome-section">
+                <!-- Hardcoded welcome title -->
                 <h1 class="welcome-title" id="welcome-title">Welcome to ExamAce!</h1>
                 <p class="welcome-subtitle">Your central hub for exam preparation.</p>
             </section>
 
-            <section class="card">
-                <h2 class="card-title">Latest Available Mock Tests</h2>
-                <ul class="test-list" id="available-tests-list">
-                    <!-- Updated with the 4 requested tests -->
-                    <li class="test-item">
-                        <div class="test-info">
-                            <h4>JEE Main Mock 1</h4>
-                            <div class="test-meta">
-                                <span>90 Questions</span>
-                                <span>&bull;</span>
-                                <span>180 mins</span>
-                                <span>&bull;</span>
-                                <span>360 Marks</span>
-                            </div>
-                        </div>
-                      
-                    </li>
-                    <li class="test-item">
-                        <div class="test-info">
-                            <h4>NEET Mock 1</h4>
-                            <div class="test-meta">
-                                <span>200 Questions (180 to attempt)</span>
-                                <span>&bull;</span>
-                                <span>200 mins</span>
-                                <span>&bull;</span>
-                                <span>720 Marks</span>
-                            </div>
-                        </div>
-                       
-                    </li>
-                     <li class="test-item">
-                        <div class="test-info">
-                            <h4>Mechanics Physics Subjective 1</h4>
-                            <div class="test-meta">
-                                <span>10 Questions</span>
-                                <span>&bull;</span>
-                                <span>60 mins</span>
-                                <span>&bull;</span>
-                                <span>50 Marks</span>
-                            </div>
-                        </div>
-                        
-                    </li>
-                     <li class="test-item">
-                        <div class="test-info">
-                            <h4>KCET Maths 1</h4>
-                            <div class="test-meta">
-                                <span>60 Questions</span>
-                                <span>&bull;</span>
-                                <span>80 mins</span>
-                                <span>&bull;</span>
-                                <span>60 Marks</span>
-                            </div>
-                        </div>
-                      
-                    </li>
-                </ul>
-                <a href="test-selection.html" class="btn btn-primary" style="margin-top: 1.5rem; display: block;">See all tests</a>
-            </section>
-
             <section class="info-grid">
-                <!-- Removed 'Track Your Progress' card -->
+                <!-- NEW CARD: Mock Tests (Replaces the previous list) -->
+                <div class="info-card">
+                    <h3>Start Mock Tests</h3>
+                    <p>Take full-length mock tests designed to simulate competitive exams like JEE, NEET, and KCET. Practice makes perfect!</p>
+                    <a href="test-selection.html">Go to Mock Tests →</a>
+                </div>
+
+                <!-- Existing card 1 -->
                 <div class="info-card">
                     <h3>Explore Study Resources</h3>
-                    <p>Find a collection of previous year's question papers </p>
+                    <p>Find a collection of previous year's question papers and curated study material to enhance your preparation.</p>
                     <a href="resources.html">Go to Resources →</a>
                 </div>
+                <!-- Existing card 2 -->
                 <div class="info-card">
                     <h3>Get Formulas & Revision Notes</h3>
                     <p>Find quick tips, revision notes, and shortcuts to help you solve problems faster and improve your overall speed.</p>
                     <a href="tips.html">Go to Formulas & Revision →</a>
                 </div>
-                 <div class="info-card">
+                <!-- Existing card 3 -->
+                <div class="info-card">
                     <h3>Understand Exam Structure</h3>
                     <p>Get the latest information, syllabus, and pattern for all major competitive exams like JEE, NEET, and KCET.</p>
                     <a href="info.html">Go to Exam Info →</a>
@@ -392,7 +329,9 @@
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // Use the same Firebase config from your other pages
+        // IMPORTANT: The Firebase config variables (__firebase_config, __initial_auth_token, __app_id) 
+        // are injected by the execution environment. The hardcoded config below is for illustration 
+        // and consistency with the original file, but real environment variables are preferred.
         const firebaseConfig = {
           apiKey: "AIzaSyCQ34ZAWWCMuaQ01fvX0sI-YdklK0mJ5aw",
           authDomain: "testseries-38752.firebaseapp.com",
@@ -401,14 +340,14 @@
           messagingSenderId: "519384534407",
           appId: "1:519384534407:web:201265a9d703708334d722"
         };
-      
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- AUTHENTICATION & DATA LOADING (FIXED) ---
+        // --- AUTHENTICATION & DATA LOADING ---
         onAuthStateChanged(auth, user => {
-            // CRITICAL FIX: Only allow non-anonymous users (those with an email login)
+            // Check if the user is logged in and not anonymous
             if (user && !user.isAnonymous) { 
                 loadDashboardData(user);
             } else {
@@ -419,16 +358,12 @@
 
         async function loadDashboardData(user) {
             try {
-                // Fetch user's name
-                // NOTE: Using a placeholder user document fetch, assuming this logic is needed for existing features.
+                // The following Firestore call remains to validate permissions 
+                // and fetch any required user-specific data, but we no longer 
+                // need it just for the welcome message.
                 const userDoc = await getDoc(doc(db, "users", user.uid));
 
-                // User's name for welcome message
-                // user.email is guaranteed to exist here due to the check above
-                const userName = user.displayName || user.email || 'User'; 
-                updateWelcomeMessage(userName);
-
-                // Show content
+                // Since the welcome message is now hardcoded, we only show the content
                 document.getElementById('loading-state').style.display = 'none';
                 document.getElementById('dashboard-content').style.display = 'block';
 
@@ -438,26 +373,22 @@
             }
         }
 
-        // --- UI UPDATE FUNCTIONS ---
-
-        function updateWelcomeMessage(name) {
-            document.getElementById('welcome-title').textContent = `Welcome, ${name.split('@')[0]}!`;
-            document.getElementById('user-avatar').textContent = name.charAt(0).toUpperCase();
-        }
-
         // --- EVENT LISTENERS ---
         const handleLogout = (event) => {
             event.preventDefault();
             signOut(auth)
                 .then(() => {
+                    // Redirect to login page after successful sign out
                     window.location.href = 'login.html';
                 })
                 .catch(error => console.error('Sign out error', error));
         };
         
+        // Attach logout handlers
         document.getElementById('logout-btn').addEventListener('click', handleLogout);
         document.getElementById('mobile-logout-btn').addEventListener('click', handleLogout);
 
+        // Mobile menu toggle
         document.getElementById('mobile-menu-btn').addEventListener('click', () => {
             document.getElementById('mobile-menu').classList.toggle('active');
         });
